@@ -65,7 +65,8 @@ class DatabaseHelper {
   Future<List<Termin>> getWeekPlan(String name, DateTime startDate, DateTime endDate) async {
     final db = await database;
     String startDateString = startDate.toIso8601String();
-    String endDateString = endDate.toIso8601String();
+    DateTime endDateTime = DateTime(endDate.year,endDate.month,endDate.day,23,59,59);
+    String endDateString = endDateTime.toIso8601String();
     List<Map<String, dynamic>> maps = await db.query(
       "createdTermine",
       where: "personName = ? AND (datetime(timeBegin) BETWEEN datetime(?) AND datetime(?))",

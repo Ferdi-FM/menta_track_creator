@@ -40,6 +40,7 @@ class TerminCreateState extends State<TerminCreatePage> {
     'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So',
     'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So',
   ];
+  Map<int, int> sliderValues = {};
 
   double sliderValue = 0;
 
@@ -99,10 +100,12 @@ class TerminCreateState extends State<TerminCreatePage> {
       );
     }
 
+    bool error = false;
 
   @override
   Widget build(BuildContext context) {
    return Scaffold(
+     resizeToAvoidBottomInset: false,
      appBar: AppBar(
        title: FittedBox(
          fit: BoxFit.fitWidth,
@@ -123,190 +126,265 @@ class TerminCreateState extends State<TerminCreatePage> {
      ),
      body: Padding(
        padding: EdgeInsets.all(25),
-       child: Column(
-         mainAxisSize: MainAxisSize.min,
+       child: Stack(
          children: [
-           TextField(
-             controller: nameController,
-             decoration: InputDecoration(labelText: "Termin Name"),
-           ),
-           SizedBox(height: 10),
-           if(widget.terminToUpdate)ListTile(
-             title: Text("Datum: ${DateFormat('dd.MM.yyyy').format(selectedDate)}"),
-             trailing: Icon(Icons.calendar_today),
-             onTap: () async {
-
-               DateTime? picked = await pickDate(selectedDate);
-               if (picked != null) {
-                 setState(() => selectedDate = picked);
-               }
-             },
-           ),
-           ListTile(
-             title: Text("Startzeit: ${startTime.format(context)}"),
-             trailing: Icon(Icons.access_time),
-             onTap: () async {
-               TimeOfDay? picked = await pickTime(startTime);
-               if (picked != null) {
-                 setState(() {
-                   startTime = picked;
-                   endTime = TimeOfDay(hour: picked.hour+1, minute: picked.minute);
-                 });
-               }
-             },
-           ),
-           ListTile(
-             title: Text("Endzeit: ${endTime.format(context)}"),
-             trailing: Icon(Icons.access_time),
-             onTap: () async {
-               TimeOfDay? picked = await pickTime(endTime);
-               if (picked != null) {
-                 setState(() => endTime = picked);
-               }
-             },
-           ),
-           SizedBox(height: 20,),
-           if(!widget.terminToUpdate)...{
-             GridView.builder(
-               shrinkWrap: true,
-               physics: NeverScrollableScrollPhysics(), // damit es nicht scrollt
-               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                   crossAxisCount: 7,
-                   crossAxisSpacing: 4,
-                   mainAxisSpacing: 4
-               ),
-               itemCount: weekdays.length,
-               itemBuilder: (context, index) {
-                 final isSelected = selectedWeekdays.contains(index);
-                 return GestureDetector(
-                   onTap: () {
-                     setState(() {
-                       if (isSelected) {
-                         selectedWeekdays.remove(index);
-                       } else {
-                         selectedWeekdays.add(index);
-                       }
-                     });
-                   },
-                   child: Container(
-                     decoration: BoxDecoration(
-                       color: isSelected ? Colors.blueAccent : Colors.grey[200],
-                       borderRadius: BorderRadius.circular(8),
-                       border: Border.all(color: Colors.grey),
-                     ),
-                     alignment: Alignment.center,
-                     child: Text(
-                       weekdays[index],
-                       style: TextStyle(
-                         color: isSelected ? Colors.white : Colors.black,
-                         fontWeight: FontWeight.w500,
+           Column(
+             mainAxisSize: MainAxisSize.min,
+             children: [
+               TextField(
+                 controller: nameController,
+                 decoration: InputDecoration(
+                     labelText: "Termin Name",
+                     errorText: !error ? null : "Bitte gib einen Namen ein",
+                     focusedBorder: !error ? OutlineInputBorder(
+                       borderSide: BorderSide(
+                         color: !error ? Colors.blue : Colors.red,
                        ),
+                     ) : null,
+                 ),
+                 onChanged: (ev){
+                   setState(() {
+                     error = false;
+                   });
+                 },
+               ),
+               SizedBox(height: 10),
+               if(widget.terminToUpdate)ListTile(
+                 title: Text("Datum: ${DateFormat('dd.MM.yyyy').format(selectedDate)}"),
+                 trailing: Icon(Icons.calendar_today),
+                 onTap: () async {
+                   DateTime? picked = await pickDate(selectedDate);
+                   if (picked != null) {
+                     setState(() => selectedDate = picked);
+                   }
+                 },
+               ),
+               ListTile(
+                 title: Text("Startzeit: ${startTime.format(context)}"),
+                 trailing: Icon(Icons.access_time),
+                 onTap: () async {
+                   TimeOfDay? picked = await pickTime(startTime);
+                   if (picked != null) {
+                     setState(() {
+                       startTime = picked;
+                       endTime = TimeOfDay(hour: picked.hour+1, minute: picked.minute);
+                     });
+                   }
+                 },
+               ),
+               ListTile(
+                 title: Text("Endzeit: ${endTime.format(context)}"),
+                 trailing: Icon(Icons.access_time),
+                 onTap: () async {
+                   TimeOfDay? picked = await pickTime(endTime);
+                   if (picked != null) {
+                     setState(() => endTime = picked);
+                   }
+                 },
+               ),
+               SizedBox(height: 20,),
+               if(!widget.terminToUpdate)...{
+                 GridView.builder(
+                   shrinkWrap: true,
+                   physics: NeverScrollableScrollPhysics(), // damit es nicht scrollt
+                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                       crossAxisCount: 7,
+                       crossAxisSpacing: 4,
+                       mainAxisSpacing: 4
+                   ),
+                   itemCount: weekdays.length,
+                   itemBuilder: (context, index) {
+                     final isSelected = selectedWeekdays.contains(index);
+                     return GestureDetector(
+                       onTap: () {
+                         setState(() {
+                           if (isSelected) {
+                             selectedWeekdays.remove(index);
+                             sliderValues.remove(index);
+
+                             selectedWeekdays.sort();
+                           } else {
+                             selectedWeekdays.add(index);
+                             sliderValues[index] = 0;
+                             selectedWeekdays.sort();
+
+                           }
+                         });
+                       },
+                       child: Container(
+                         decoration: BoxDecoration(
+                           color: isSelected ? Colors.blueAccent : Colors.grey[200],
+                           borderRadius: BorderRadius.circular(8),
+                           border: Border.all(color: Colors.grey),
+                         ),
+                         alignment: Alignment.center,
+                         child: Text(
+                           weekdays[index],
+                           style: TextStyle(
+                             color: isSelected ? Colors.white : Colors.black,
+                             fontWeight: FontWeight.w500,
+                           ),
+                         ),
+                       ),
+                     );
+                   },
+                 ),
+                 SizedBox(height: 25,),
+                 if(selectedWeekdays.isNotEmpty)Material(
+                   color: Theme.of(context).listTileTheme.tileColor,
+                   borderRadius: BorderRadius.circular(15),
+                   elevation: 5,
+                   child: Padding(
+                     padding: const EdgeInsets.all(10),
+                     child: Column(
+                       mainAxisSize: MainAxisSize.min, // Verhindert unendliches Wachsen
+                       children: [
+                         Row(
+                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                           children: [
+                             SizedBox(width: 10),
+                             Text("GESTAFFELT"),
+                             Tooltip(
+                               message:
+                               "Fügt jedem Termin die ausgewählte Dauer gestaffelt hinzu\nAlso z.B. bei 15min und drei ausgewählten Tagen: \n - 1. Tag = +0  min;\n - 2. Tag = +15 min;\n - 3. Tag = +30 min;\n etc.",
+                               showDuration: Duration(seconds: 5),
+                               child: Icon(Icons.help_outline_sharp),
+                             ),
+                           ],
+                         ),
+                         const SizedBox(height: 10),
+                         SizedBox(
+                           height: MediaQuery.of(context).size.height * 0.4, // Begrenzte Höhe für ListView
+                           child: ListView.builder(
+                             itemCount: selectedWeekdays.length,
+                             itemBuilder: (context, index) {
+                               final weekdayIndex = selectedWeekdays[index];
+                               return ListTile(
+                                 shape: RoundedRectangleBorder(),
+                                 leading: Text(weekdays[weekdayIndex]),
+                                 title: Slider(
+                                   value: sliderValues[weekdayIndex]!.toDouble(),
+                                   onChanged: (ev) {
+                                     setState(() {
+                                       sliderValues[weekdayIndex] = ev.toInt();
+                                     });
+                                   },
+                                   divisions: 24,
+                                   max: 60,
+                                   min: -60,
+                                   label: "${sliderValues[weekdayIndex]} min",
+                                 ),
+                                 trailing: Text("${sliderValues[weekdayIndex]} min"),
+                               );
+                             },
+                           ),
+                         ),
+                       ],
                      ),
                    ),
-                 );
+                 )
                },
-             ),
-             SizedBox(height: 25,),
-             Material(
-               elevation: 5,
-               child: Column(
-                 children: [
-                   Text("GESTAFFELT  ${sliderValue.toInt()} min"),
-                   Slider(
-                     value: sliderValue,
-                     onChanged: (ev){
-                       setState(() {
-                         sliderValue = ev;
-                       });
-                       //print(ev.toInt());
-                     },
-                     divisions: 24,
-                     max: 60,
-                     min: -60,
-                     label: "${sliderValue.toInt().toString()} min",
-                   ),
-                 ],
-               ),
-             )
-           },
+               SizedBox(height: 20,),
 
-           SizedBox(height: 20,),
 
-           Expanded(
+             ],
+           ),
+           Align(
+               alignment: Alignment.bottomCenter,
                child: Column(
                  spacing: 20,
                  mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          elevation: 10,
-                            backgroundColor: Theme.of(context).primaryColorLight,
-                          minimumSize: Size(150, 40)
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        child: Text("Abbrechen",style: TextStyle(color: Theme.of(context).primaryColorDark)),
-                      ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                            elevation: 10,
-                            backgroundColor: Theme.of(context).primaryColorLight,
-                          minimumSize: Size(150, 40)
-                        ),
-                        onPressed: () {
-                          if (nameController.text.isNotEmpty) {
-                            if(widget.terminToUpdate){
-                              Termin t = Termin(
-                                name: nameController.text,
-                                startTime: selectedDate.add(Duration(hours: startTime.hour, minutes: startTime.minute)),
-                                endTime: selectedDate.add(Duration(hours: endTime.hour, minutes: endTime.minute)),
-                              );
-                              Navigator.of(context).pop(t);
-                            } else {
-                              for(int i = 0; i < selectedWeekdays.length; i++){
-                                int day = selectedWeekdays[i];
-                                DateTime iterativeStartTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, startTime.hour, startTime.minute);
-                                DateTime iterativeEndTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, endTime.hour, endTime.minute);
-                                iterativeEndTime = iterativeEndTime.add(Duration(days: day));
-                                iterativeEndTime = iterativeEndTime.add(Duration(minutes: sliderValue.toInt()*i));
-                                iterativeStartTime = iterativeStartTime.add(Duration(days: day));
-                                iterativeStartTime = iterativeStartTime.add(Duration(minutes: sliderValue.toInt()*i));
-                                Termin t = Termin(name: nameController.text, startTime: iterativeStartTime, endTime: iterativeEndTime);
-                                DatabaseHelper().insertTermin(t, widget.userName);
-                              }
-                              Navigator.of(context).pop(
-                                  true
-                              );
-                            }
-                          }
-                        },
-                        child: Text("Speichern",style: TextStyle(color: Theme.of(context).primaryColorDark),),
-                      ),
-                    ],
-                  ),
-                  if(widget.terminToUpdate)TextButton(
-                      onPressed: (){
-                        DatabaseHelper().deleteTermin(widget.userName, Termin(name: widget.existingName!, startTime: widget.existingStartTime!, endTime: widget.existingEndTime!));
-                        Navigator.of(context).pop(true);
-                      },
-                      child: Container(
-                          width: MediaQuery.of(context).size.width*0.75,
-                          height: 40,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: Colors.redAccent.shade200.withAlpha(120)
-                          ),
-                          child: Center(child: Text("Löschen", textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 20),),)
+                 children: [
+                   Row(
+                     crossAxisAlignment: CrossAxisAlignment.center,
+                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                     children: [
+                       TextButton(
+                         style: TextButton.styleFrom(
+                             elevation: 10,
+                             backgroundColor: Theme.of(context).primaryColorLight,
+                             minimumSize: Size(150, 40)
+                         ),
+                         onPressed: () => Navigator.pop(context),
+                         child: Text("Abbrechen",style: TextStyle(color: Theme.of(context).primaryColorDark)),
+                       ),
+                       TextButton(
+                         style: TextButton.styleFrom(
+                             elevation: 10,
+                             backgroundColor: Theme.of(context).primaryColorLight,
+                             minimumSize: Size(150, 40)
+                         ),
+                         onPressed: () {
+                           if (nameController.text.isNotEmpty) {
+                             if(widget.terminToUpdate){
+                               Termin t = Termin(
+                                 name: nameController.text,
+                                 startTime: selectedDate.add(Duration(hours: startTime.hour, minutes: startTime.minute)),
+                                 endTime: selectedDate.add(Duration(hours: endTime.hour, minutes: endTime.minute)),
+                               );
+                               Navigator.of(context).pop(t);
+                             } else {
+                               if(selectedWeekdays.isEmpty) {
+                                 if(mounted){
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                     SnackBar(
+                                       content: Text("Keinen Tag ausgewählt!"),
+                                       duration: Duration(seconds: 3),
+                                       behavior: SnackBarBehavior.floating,
+                                       margin: EdgeInsets.only(bottom: 150, left: 10,right: 10),
+                                       shape: RoundedRectangleBorder(
+                                           borderRadius: BorderRadius.circular(10)
+                                       ),
+                                       showCloseIcon: true,
+                                     ),
+                                   );
+                                 }
+                                  return;
+                                }
+                               for(int i = 0; i < selectedWeekdays.length; i++){
+                                 int day = selectedWeekdays[i];
+                                 DateTime iterativeStartTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, startTime.hour, startTime.minute);
+                                 DateTime iterativeEndTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, endTime.hour, endTime.minute);
+                                 iterativeEndTime = iterativeEndTime.add(Duration(days: day));
+                                 iterativeEndTime = iterativeEndTime.add(Duration(minutes: sliderValues[selectedWeekdays[i]]!));
+                                 iterativeStartTime = iterativeStartTime.add(Duration(days: day));
+                                 iterativeStartTime = iterativeStartTime.add(Duration(minutes: sliderValues[selectedWeekdays[i]]!));
+                                 Termin t = Termin(name: nameController.text, startTime: iterativeStartTime, endTime: iterativeEndTime);
+                                 DatabaseHelper().insertTermin(t, widget.userName);
+                               }
+                               Navigator.of(context).pop(
+                                   true
+                               );
+                             }
+                           } else {
+                              setState(() {
+                                error = true;
+                              });
+                           }
+                         },
+                         child: Text("Speichern",style: TextStyle(color: Theme.of(context).primaryColorDark),),
+                       ),
+                     ],
+                   ),
+                   if(widget.terminToUpdate)TextButton(
+                       onPressed: (){
+                         DatabaseHelper().deleteTermin(widget.userName, Termin(name: widget.existingName!, startTime: widget.existingStartTime!, endTime: widget.existingEndTime!));
+                         Navigator.of(context).pop(true);
+                       },
+                       child: Container(
+                           width: MediaQuery.of(context).size.width*0.75,
+                           height: 40,
+                           decoration: BoxDecoration(
+                               borderRadius: BorderRadius.circular(20),
+                               color: Colors.redAccent.shade200.withAlpha(120)
+                           ),
+                           child: Center(child: Text("Löschen", textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 20),),)
 
-                      )
-                  ),
-                ],
-              )
+                       )
+                   ),
+                 ],
+               )
            )
-
          ],
        ),
      ),

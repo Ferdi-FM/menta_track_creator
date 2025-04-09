@@ -43,7 +43,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     DateTimeRange? picked = await showDateRangePicker(
       context: context,
       locale: const Locale("de", "DE"),
-      initialDateRange: DateTimeRange(start: ranges.last.end.add(Duration(days: 1)), end: ranges.last.end.add(Duration(days: 7))),
+      initialDateRange: ranges.isNotEmpty ? DateTimeRange(start: ranges.last.end.add(Duration(days: 1)), end: ranges.last.end.add(Duration(days: 7))) : DateTimeRange(start: DateTime.now(), end: DateTime.now().add(Duration(days: 6))),
       firstDate: DateTime(2025),
       lastDate: DateTime(2101),
     );
