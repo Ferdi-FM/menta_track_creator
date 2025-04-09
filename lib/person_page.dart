@@ -77,14 +77,13 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           );
         }
       } else {
-        print(index);
         if(index == null){
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
           setState(() {
             ranges.add(picked);
           });
         } else {
-          List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.name, ranges[index!].start, ranges[index!].end);
+          List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.name, ranges[index].start, ranges[index].end);
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
           DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
           for(Termin t in tList){

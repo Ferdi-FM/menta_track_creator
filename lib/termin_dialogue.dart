@@ -84,7 +84,7 @@ class TerminDialog {
                   ),
                   SizedBox(height: 10),
                   ListTile(
-                    title: Text("Datum: ${selectedDate != null ? DateFormat('dd.MM.yyyy').format(selectedDate) : "Nicht gesetzt"}"),
+                    title: Text("Datum: ${DateFormat('dd.MM.yyyy').format(selectedDate)}"),
                     trailing: Icon(Icons.calendar_today),
                     onTap: () async {
 
@@ -95,7 +95,7 @@ class TerminDialog {
                     },
                   ),
                   ListTile(
-                    title: Text("Startzeit: ${startTime != null ? startTime.format(context) : "Nicht gesetzt"}"),
+                    title: Text("Startzeit: ${startTime.format(context)}"),
                     trailing: Icon(Icons.access_time),
                     onTap: () async {
                       TimeOfDay? picked = await pickTime(startTime);
@@ -105,7 +105,7 @@ class TerminDialog {
                     },
                   ),
                   ListTile(
-                    title: Text("Endzeit: ${endTime != null ? endTime.format(context) : "Nicht gesetzt"}"),
+                    title: Text("Endzeit: ${endTime.format(context)}"),
                     trailing: Icon(Icons.access_time),
                     onTap: () async {
                       TimeOfDay? picked = await pickTime(endTime);

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:menta_track_creator/create_qr_code.dart';
-import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
-import 'package:menta_track_creator/termin_dialogue.dart';
 
 class RangeTile extends StatelessWidget {
   final DateTime start;
