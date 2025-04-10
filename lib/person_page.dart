@@ -63,19 +63,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
             picked.end.toIso8601String(),]
       );
       if(maps.isNotEmpty){
-        if(mounted){
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Die Pläne überschneiden sich!"),
-              duration: Duration(seconds: 2),
-              behavior: SnackBarBehavior.fixed,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(10),topRight: Radius.circular(10))
-              ),
-              showCloseIcon: true,
-            ),
-          );
-        }
+        if(mounted)Utilities().showSnackBar(context, "Die Pläne überschneiden sich!");
       } else {
         if(index == null){
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
@@ -87,13 +75,16 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
           DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
           for(Termin t in tList){
-            Duration dif = picked.start.difference(t.startTime);
+            int dif = DateTime(t.startTime.year,t.startTime.month,t.startTime.day).difference(normalStart).inDays;
             Duration dif2 = picked.start.difference(normalStart);
-            DateTime newTime = picked.start.add(dif2-dif);
+            DateTime newTime = normalStart.add(dif2).add(Duration(days: dif));
+            DateTime startTime = newTime.add(Duration(hours: t.startTime.hour, minutes: t.startTime.minute));
+            DateTime endTime = newTime.add(Duration(hours: t.endTime.hour, minutes: t.endTime.minute));
+            if(endTime.isBefore(startTime))endTime = endTime.add(Duration(days: 1));
             Termin newT = Termin(
-                name: widget.person.name,
-                startTime: DateTime(newTime.year, newTime.month, newTime.day, t.startTime.hour, t.startTime.minute),
-                endTime: DateTime(newTime.year, newTime.month, newTime.day, t.endTime.hour, t.endTime.minute),
+                name: t.name,
+                startTime: startTime,
+                endTime: endTime,
             );
             DatabaseHelper().insertTermin(newT, widget.person.name);
           }
@@ -107,8 +98,26 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     }
   }
 
-  void itemTap(){
-
+  List<Termin> copyTermineToNewWeek({
+    required List<Termin> termine,
+    required DateTime fromWeekStart,
+    required DateTime toWeekStart,
+  }) {
+    return termine.map((t) {
+      int daysOffset = DateTime(t.startTime.year, t.startTime.month, t.startTime.day)
+          .difference(fromWeekStart)
+          .inDays;
+      DateTime newBase = toWeekStart.add(Duration(days: daysOffset));
+      return Termin(
+        name: t.name,
+        startTime: DateTime(
+            newBase.year, newBase.month, newBase.day,
+            t.startTime.hour, t.startTime.minute),
+        endTime: DateTime(
+            newBase.year, newBase.month, newBase.day,
+            t.endTime.hour, t.endTime.minute),
+      );
+    }).toList();
   }
 
   @override
@@ -116,6 +125,17 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     return Scaffold(
       appBar: AppBar(
           title: Text(widget.person.name),
+          leading: IconButton(
+              onPressed: (){
+                if(selectedRanges.isNotEmpty){
+                  setState(() {
+                    selectedRanges.clear();
+                  });
+                } else {
+                  navigatorKey.currentState?.pop();
+                }
+              },
+              icon: Icon(Icons.arrow_back)),
           actions: [
               Utilities().getHelpBurgerMenu(context, "PersonPage")
           ],

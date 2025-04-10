@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/create_qr_code.dart';
 import 'package:menta_track_creator/database_helper.dart';
+import 'package:menta_track_creator/helper_utilities.dart';
 import 'package:menta_track_creator/termin_create_page.dart';
 import 'package:menta_track_creator/termin_dialogue.dart';
 import 'package:time_planner/time_planner.dart';
@@ -137,7 +138,6 @@ class MyHomePageState extends State<PlanView>{
       // Ursprünglichen Termin als verarbeitet markieren
       groupedTerminNames.add(t1SafeName);
     }
-
     for (Termin t in weekAppointments) {
       String title = t.name;
       DateTime startTime = t.startTime;
@@ -153,7 +153,6 @@ class MyHomePageState extends State<PlanView>{
           overlapOffset = group.indexOf(safeName);
         }
       }
-
       _addObject(title, startTime, endTime, overlapPos, overlapOffset);
     }
   }
@@ -200,103 +199,126 @@ class MyHomePageState extends State<PlanView>{
   //erzeugt Event im Kalender
   void _addObject(String title, DateTime startTime, DateTime endTime, int numberofOverlaps, int overlapOffset) { //
     Map<String, int> convertedDate = convertToCalendarFormat(calendarStart, startTime);
-    int day = convertedDate["Days"]!;
-    int hour = convertedDate["Hours"]!;
-    int minutes = convertedDate["Minutes"]!;
-    int duration = endTime.difference(startTime).inMinutes;
-    //if(color == Colors.lightGreen) rememberAnsweredTasks += 1; //Merkt sich, wieviele Taks geantwortet wurden
+    List<int> dayList = [convertedDate["Days"]!];
+    List<int> hourList = [convertedDate["Hours"]!];
+    List<int> minuteList = [convertedDate["Minutes"]!];
+    List<int> durationList = [endTime.difference(startTime).inMinutes];
+    
+    if(startTime.day != endTime.day){
+      dayList.clear(); hourList.clear(); minuteList.clear(); durationList.clear();
+      
+      DateTime midNightNewDay = DateTime(endTime.year,endTime.month,endTime.day);
+      Map<String, int> convertedSecondDate = convertToCalendarFormat(calendarStart, midNightNewDay);
+      durationList.add(midNightNewDay.difference(startTime).inMinutes);
+      dayList.add(convertedDate["Days"]!);
+      hourList.add(convertedDate["Hours"]!);
+      minuteList.add(convertedDate["Minutes"]!);
+      durationList.add(endTime.difference(midNightNewDay).inMinutes);
+      dayList.add(convertedSecondDate["Days"]!);
+      hourList.add(convertedSecondDate["Hours"]!);
+      minuteList.add(convertedSecondDate["Minutes"]!);
+    }
+    for(int i = 0; i < dayList.length; i++){
+      int duration = durationList[i];
+      if(duration.isNegative){
+        Termin toDeleteTermin = Termin(name: title, startTime: startTime, endTime: endTime);
+        DatabaseHelper().deleteTermin(widget.userName, toDeleteTermin);
+        Utilities().showSnackBar(context, "Ein Falsch gespeicherten Termin wurde gelöscht");
+        return;
+      }
+      int textheight = duration - 24;
 
-    int textheight = duration - 24;
-
-    setState(() {
-      tasks.add(
-          TimePlannerTask(
-            color: Colors.white70,
-            dateTime: TimePlannerDateTime(
-                day: day,
-                hour: hour,
-                minutes: minutes),
-            minutesDuration: duration,
-            numOfOverlaps: numberofOverlaps,
-            overLapOffset: overlapOffset,
-            daysDuration: 1,
-            child:
-            GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTapUp: (event) async {
-                  Offset pos = event.globalPosition;
-                  Termin oldTermin = Termin(name: title, startTime: startTime, endTime: endTime);
-                  final result = await Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
+      setState(() {
+        tasks.add(
+            TimePlannerTask(
+              color: Colors.white70,
+              dateTime: TimePlannerDateTime(
+                  day: dayList[i],
+                  hour: hourList[i],
+                  minutes: minuteList[i]),
+              minutesDuration: durationList[i],
+              numOfOverlaps: numberofOverlaps,
+              overLapOffset: overlapOffset,
+              daysDuration: 1,
+              child:
+              GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTapUp: (event) async {
+                    Offset pos = event.globalPosition;
+                    Termin oldTermin = Termin(name: title, startTime: startTime, endTime: endTime);
+                    final result = await Navigator.of(context).push(
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
                             startDate: widget.start,
                             endDate: widget.end,
-                          userName: widget.userName,
-                          terminToUpdate: true,
-                          existingStartTime: startTime,
-                          existingEndTime: endTime,
-                          existingName: title,
-                        ),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          const curve = Curves.easeInOut;
-                          var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
-                          var scaleAnimation = animation.drive(tween);
-                          return ScaleTransition(
-                            scale: scaleAnimation,
-                            alignment: Alignment(pos.dx / MediaQuery.of(context).size.width * 2 - 1,
-                                pos.dy / MediaQuery.of(context).size.height * 2 - 1), // Die Tap-Position relativ zur Bildschirmgröße
-                            child: child,
-                          );},
-                      )
-                  );
-                  if(result != null){
-                    if(result == true) {
-                    } else {
-                      await DatabaseHelper().updateTermin(widget.userName, oldTermin, result);
+                            userName: widget.userName,
+                            terminToUpdate: true,
+                            existingStartTime: startTime,
+                            existingEndTime: endTime,
+                            existingName: title,
+                          ),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            const curve = Curves.easeInOut;
+                            var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
+                            var scaleAnimation = animation.drive(tween);
+                            return ScaleTransition(
+                              scale: scaleAnimation,
+                              alignment: Alignment(pos.dx / MediaQuery.of(context).size.width * 2 - 1,
+                                  pos.dy / MediaQuery.of(context).size.height * 2 - 1), // Die Tap-Position relativ zur Bildschirmgröße
+                              child: child,
+                            );},
+                        )
+                    );
+                    if(result != null){
+                      if(result == true) {
+                      } else {
+                        await DatabaseHelper().updateTermin(widget.userName, oldTermin, result);
+                      }
+                      updateCalendar();
                     }
-                    updateCalendar();
-                  }
-                },
-                child: Stack( //Uhrzeit und Text könnten bei zu kurzen Terminen überlappen
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
+                  },
+                  child: Stack( //Uhrzeit und Text könnten bei zu kurzen Terminen überlappen
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
                         top: -6,
                         right: -3,
                         child: SizedBox(),//Icon(color == Colors.blueGrey.shade200 ? Icons.priority_high : null)
-                    ),
-                    ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
-                    Positioned(
-                      top: 1,
-                      left: 5,
-                      child: Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: duration/8 < 10 ? duration/8 : 9,),), //Ursprünglich 7 : 9
-                    ),
-                    Positioned(
-                      bottom: 1,
-                      left: 5,
-                      child: Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: duration/8 < 10 ? duration/8 : 9),), //${DateFormat("HH:mm").format(startTime)} -
-                    ),
-                    Container(
-                      height: textheight.toDouble(),
-                      alignment: Alignment.center,
-                      margin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/3, top: duration > 30 ? 10 : duration/4), //Ursprünglich 8 : 12
-                      child: Text(
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: (duration/30).toInt(),
-                        title,
-                        style: TextStyle(
-                          fontSize: duration > 30 ? 10 : duration/7,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
                       ),
-                    )
-                  ],
-                )
-            ),
-          )
+                      ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
+                      Positioned(
+                        top: 1,
+                        left: 5,
+                        child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: duration/8 < 10 ? duration/8 : 9,),) : Text(""), //Ursprünglich 7 : 9
+                      ),
+                      Positioned(
+                        bottom: 1,
+                        left: 5,
+                        child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: duration/8 < 10 ? duration/8 : 9),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
+                      ),
+                      Container(
+                        height: textheight.toDouble(),
+                        alignment: Alignment.center,
+                        margin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/1, top: duration > 30 ? 10 : duration/1), //Ursprünglich 8 : 12
+                        child: Text(
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
+                          title,
+                          style: TextStyle(
+                            fontSize: duration > 30 ? 10 : duration/3,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    ],
+                  )
+              ),
+            )
+        );
+      }
       );
-    });
+    }
   }
 
   @override

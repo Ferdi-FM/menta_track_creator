@@ -192,4 +192,19 @@ class Utilities {
     );
   }
 
+  void showSnackBar(BuildContext context, String text){
+    if(context.mounted){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(text),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.fixed,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(10),topRight: Radius.circular(10))
+          ),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
 }

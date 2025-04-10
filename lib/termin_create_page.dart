@@ -325,7 +325,7 @@ class TerminCreateState extends State<TerminCreatePage> {
                                Navigator.of(context).pop(t);
                              } else {
                                if(selectedWeekdays.isEmpty) {
-                                 if(mounted){
+                                 if(mounted){ //TODO: Dalassen, wegen anderer positionierung als normal
                                    ScaffoldMessenger.of(context).showSnackBar(
                                      SnackBar(
                                        content: Text("Keinen Tag ausgewählt!"),
@@ -345,10 +345,15 @@ class TerminCreateState extends State<TerminCreatePage> {
                                  int day = selectedWeekdays[i];
                                  DateTime iterativeStartTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, startTime.hour, startTime.minute);
                                  DateTime iterativeEndTime = DateTime(widget.startDate.year, widget.startDate.month, widget.startDate.day, endTime.hour, endTime.minute);
-                                 iterativeEndTime = iterativeEndTime.add(Duration(days: day));
-                                 iterativeEndTime = iterativeEndTime.add(Duration(minutes: sliderValues[selectedWeekdays[i]]!));
+                                 if(endTime.isBefore(startTime)){
+                                   iterativeEndTime = iterativeEndTime.add(Duration(days: 1));
+                                 }
                                  iterativeStartTime = iterativeStartTime.add(Duration(days: day));
                                  iterativeStartTime = iterativeStartTime.add(Duration(minutes: sliderValues[selectedWeekdays[i]]!));
+
+                                 iterativeEndTime = iterativeEndTime.add(Duration(days: day));
+                                 iterativeEndTime = iterativeEndTime.add(Duration(minutes: sliderValues[selectedWeekdays[i]]!));
+
                                  Termin t = Termin(name: nameController.text, startTime: iterativeStartTime, endTime: iterativeEndTime);
                                  DatabaseHelper().insertTermin(t, widget.userName);
                                }
