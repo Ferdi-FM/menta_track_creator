@@ -54,7 +54,7 @@ class RangeTile extends StatelessWidget {
               minTileHeight: 72,
               contentPadding: EdgeInsets.symmetric(horizontal: 10),
               leading: Icon(Icons.calendar_view_week),
-              title: Text('Von:  ${Utilities().getWeekDay(start.weekday)} ${DateFormat("dd.MM.yy").format(start)}\nBis:   ${Utilities().getWeekDay(end.weekday)} ${DateFormat("dd.MM.yy").format(end)}', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text("Von:  ${Utilities().getWeekDay(start.weekday)} ${DateFormat("dd.MM.yy").format(start)}\nBis:   ${Utilities().getWeekDay(end.weekday)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold)),
               trailing: SizedBox(
                 height: 70,
                 width: 100,

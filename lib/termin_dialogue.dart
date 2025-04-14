@@ -84,7 +84,7 @@ class TerminDialog {
                   ),
                   SizedBox(height: 10),
                   ListTile(
-                    title: Text("Datum: ${DateFormat('dd.MM.yyyy').format(selectedDate)}"),
+                    title: Text("Datum: ${DateFormat("dd.MM.yyyy").format(selectedDate)}"),
                     trailing: Icon(Icons.calendar_today),
                     onTap: () async {
 

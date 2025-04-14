@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,8 +11,6 @@ import 'package:menta_track_creator/termin_dialogue.dart';
 import 'package:time_planner/time_planner.dart';
 
 import 'main.dart';
-
-//Example-Code von: https://pub.dev/packages/time_planner/example
 
 class PlanView extends StatefulWidget {
   const PlanView({
@@ -40,29 +39,15 @@ class MyHomePageState extends State<PlanView>{
   bool hapticFeedback = false;
   int scrollToSpecificDay = 0;
   int scrollToSpecificHour = 0;
+  late Widget timePlanner;
+  bool loaded = false;
+  List<List<String>> overlapGroups = [];
+  List<Termin> weekAppointments = [];
 
   @override
   void initState() {
     super.initState();
     setUpCalendar1(widget.start, widget.end);
-  }
-
-  void setUpCalendar(DateTime start, DateTime end) async{
-    calendarStart = start;
-    int timeperiodInDays = end.difference(start).inDays;
-    calendarHeaders = [];
-
-    for(int i = 0; i < timeperiodInDays;i++){
-      DateTime date = calendarStart.add(Duration(days: i));
-      String displayDate = DateFormat("dd.MM.yy").format(date);
-      String weekDay = getWeekdayName(date);
-      calendarHeaders.add(
-          TimePlannerTitle(
-            title: weekDay,
-            date: displayDate,
-            voidAction: clickOnCalendarHeader,
-          ));
-    }
   }
 
   ///Setup vom Kalendar und den Einträgen
@@ -92,9 +77,9 @@ class MyHomePageState extends State<PlanView>{
           ));
     }
 
-    List<Termin> weekAppointments = await databaseHelper.getWeekPlan(widget.userName, widget.start, widget.end);
+    weekAppointments = await databaseHelper.getWeekPlan(widget.userName, widget.start, widget.end);
     // Liste für Gruppen von überschneidenden Terminen
-    List<List<String>> overlapGroups = [];
+    overlapGroups = [];
     Set<String> groupedTerminNames = {};
 
     // Funktion, um zu überprüfen, ob zwei Termine sich überschneiden
@@ -155,9 +140,17 @@ class MyHomePageState extends State<PlanView>{
       }
       _addObject(title, startTime, endTime, overlapPos, overlapOffset);
     }
+
+    setState(() {
+      timePlanner = createTimePlaner(cellHeight, 120);
+      loaded = true;
+    });
   }
 
   void clickOnCalendarHeader(String dateString){
+    setState(() {
+      cellHeight = 120;
+    });
   }
 
   void updateCalendar() {
@@ -165,6 +158,30 @@ class MyHomePageState extends State<PlanView>{
       tasks.clear();
     });
     setUpCalendar1(widget.start,widget.end);
+  }
+
+  ///Update wenn keine neuen Tasks hinzukommen
+  void updateTasks(){
+    setState(() {
+      tasks.clear();
+      for (Termin t in weekAppointments) {
+        String title = t.name;
+        DateTime startTime = t.startTime;
+        DateTime endTime = t.endTime;
+
+        int overlapPos =  0;
+        int overlapOffset = 0;
+        String safeName = "${t.name}${t.startTime.toIso8601String()}";
+        for (var group in overlapGroups) {
+          if(group.contains(safeName)){
+            overlapPos = group.length;
+            overlapOffset = group.indexOf(safeName);
+          }
+        }
+        _addObject(title, startTime, endTime, overlapPos, overlapOffset);
+      }
+    });
+
   }
 
 
@@ -226,8 +243,8 @@ class MyHomePageState extends State<PlanView>{
         Utilities().showSnackBar(context, "Ein Falsch gespeicherten Termin wurde gelöscht");
         return;
       }
-      int textheight = duration - 24;
-
+      double fontSize = min(cellHeight * 0.25, duration * cellHeight * 0.01);
+      fontSize = fontSize.clamp(7.0, 14.0);
       setState(() {
         tasks.add(
             TimePlannerTask(
@@ -277,48 +294,77 @@ class MyHomePageState extends State<PlanView>{
                       updateCalendar();
                     }
                   },
-                  child: Stack( //Uhrzeit und Text könnten bei zu kurzen Terminen überlappen
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        top: -6,
-                        right: -3,
-                        child: SizedBox(),//Icon(color == Colors.blueGrey.shade200 ? Icons.priority_high : null)
-                      ),
-                      ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
-                      Positioned(
-                        top: 1,
-                        left: 5,
-                        child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: duration/8 < 10 ? duration/8 : 9,),) : Text(""), //Ursprünglich 7 : 9
-                      ),
-                      Positioned(
-                        bottom: 1,
-                        left: 5,
-                        child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: duration/8 < 10 ? duration/8 : 9),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
-                      ),
-                      Container(
-                        height: textheight.toDouble(),
-                        alignment: Alignment.center,
-                        margin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/1, top: duration > 30 ? 10 : duration/1), //Ursprünglich 8 : 12
-                        child: Text(
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
-                          title,
-                          style: TextStyle(
-                            fontSize: duration > 30 ? 10 : duration/3,
-                            color: Colors.black,
+                  child: SizedBox(
+                      height: cellHeight.toDouble()*duration/60,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            top: -6,
+                            right: -3,
+                            child: SizedBox(),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      )
-                    ],
-                  )
+                          ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
+                          Positioned(
+                            top: 1,
+                            left: 5,
+                            child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: cellHeight*duration/60 < 35 ? fontSize.clamp(3, 6) : fontSize.clamp(4, 9),),) : Text(""), //Ursprünglich 7 : 9
+                          ),
+                          Positioned(
+                            bottom: 1,
+                            left: 5,
+                            child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: cellHeight*duration/60 < 35 ? fontSize.clamp(3, 6) : fontSize.clamp(4, 9)),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
+                          ),
+                          Align(
+                            alignment: Alignment.center,
+                            //smargin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/1, top: duration > 30 ? 10 : duration/1), //Ursprünglich 8 : 12
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
+                                title,
+                                style: TextStyle(
+                                  fontSize: fontSize,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.normal
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          )
+                        ],
+                      ))
               ),
             )
         );
       }
       );
     }
+  }
+
+  int cellHeight = 60;
+  TimePlanner createTimePlaner(int cellHeight, int cellWidth){
+    return TimePlanner( //index startet bei 0, 0-23 ist also 24/7
+      key: UniqueKey(),
+      startHour: 0,
+      endHour: 23,
+      use24HourFormat: true,
+      setTimeOnAxis: true,
+      currentTimeAnimation: true,
+      animateToDefinedHour: scrollToSpecificHour,
+      animateToDefinedDay: scrollToSpecificDay,
+      style: TimePlannerStyle(
+        cellHeight: cellHeight,
+        cellWidth:  cellWidth, //leider nur wenn neu gebuildet wird
+        showScrollBar: true,
+        borderRadius: BorderRadius.all(Radius.circular(5)),
+        interstitialEvenColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[50] : Colors.blueGrey.shade400,
+        interstitialOddColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[200] : Colors.blueGrey.shade500,
+      ),
+      headers: calendarHeaders,
+      tasks: tasks,
+    );
   }
 
   @override
@@ -370,37 +416,28 @@ class MyHomePageState extends State<PlanView>{
           )
         ],
       ),
-      body: LayoutBuilder(builder: (context, constraints){
-        bool isPortrait = constraints.maxWidth < 600;
-        return Container(
+      body:LayoutBuilder(builder: (context, constraints){
+      bool isPortrait = constraints.maxWidth < 600;
+      return Container(
           decoration: BoxDecoration(
               borderRadius: BorderRadius.only(topLeft: Radius.circular(20),topRight: Radius.circular(20)),
               color: Theme.of(context).scaffoldBackgroundColor
           ),
           child: Padding(
             padding: EdgeInsets.only(left: 0, right: 0),
-            child: TimePlanner( //index startet bei 0, 0-23 ist also 24/7
-              startHour: 0,
-              endHour: 23,
-              use24HourFormat: true,
-              setTimeOnAxis: true,
-              currentTimeAnimation: true,
-              animateToDefinedHour: scrollToSpecificHour,
-              animateToDefinedDay: scrollToSpecificDay,
-              style: TimePlannerStyle(
-                cellHeight: 60,
-                cellWidth:  isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt(), //leider nur wenn neu gebuildet wird
-                showScrollBar: true,
-                borderRadius: BorderRadius.all(Radius.circular(5)),
-                interstitialEvenColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[50] : Colors.blueGrey.shade400,
-                interstitialOddColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[200] : Colors.blueGrey.shade500,
-              ),
-              headers: calendarHeaders,
-              tasks: tasks,
-            ),
+            child: GestureDetector(
+                onScaleUpdate: (details) {
+                  setState(() {
+                    cellHeight = (cellHeight * details.scale).toInt().clamp(35, 250);
+                    updateTasks();
+                  });
+                },
+              child: loaded ? createTimePlaner(cellHeight, isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt() ) : SizedBox() //index startet bei 0, 0-23 ist also 24/7
+
+            )
           ),
-        );
-      }),
+        );}
+    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.of(context).push(
@@ -426,10 +463,8 @@ class MyHomePageState extends State<PlanView>{
               )
           );
           if(result != null){
-            //DatabaseHelper().insertTermin(result, widget.userName);
             updateCalendar();
           }
-
         },
         child: FittedBox( //Damit bei unterschiedlichen Displaygrößen die Icongröße nicht Über den Button ragt
           fit: BoxFit.fitHeight,
@@ -440,5 +475,23 @@ class MyHomePageState extends State<PlanView>{
   }
 }
 
-
+/*TimePlanner(
+                startHour: 0,
+                endHour: 23,
+                use24HourFormat: true,
+                setTimeOnAxis: true,
+                currentTimeAnimation: true,
+                animateToDefinedHour: scrollToSpecificHour,
+                animateToDefinedDay: scrollToSpecificDay,
+                style: TimePlannerStyle(
+                  cellHeight: cellHeight,
+                  cellWidth:  125, //leider nur wenn neu gebuildet wird
+                  showScrollBar: true,
+                  borderRadius: BorderRadius.all(Radius.circular(5)),
+                  interstitialEvenColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[50] : Colors.blueGrey.shade400,
+                  interstitialOddColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[200] : Colors.blueGrey.shade500,
+                ),
+                headers: calendarHeaders,
+                tasks: tasks,
+              ),*/
 

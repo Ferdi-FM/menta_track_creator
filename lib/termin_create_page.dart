@@ -37,8 +37,7 @@ class TerminCreateState extends State<TerminCreatePage> {
   late TimeOfDay endTime;
   List<int> selectedWeekdays = [];
   final List<String> weekdays = [
-    'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So',
-    'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So',
+    "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So",
   ];
   Map<int, int> sliderValues = {};
 
@@ -150,7 +149,7 @@ class TerminCreateState extends State<TerminCreatePage> {
                ),
                SizedBox(height: 10),
                if(widget.terminToUpdate)ListTile(
-                 title: Text("Datum: ${DateFormat('dd.MM.yyyy').format(selectedDate)}"),
+                 title: Text("Datum: ${DateFormat("dd.MM.yyyy").format(selectedDate)}"),
                  trailing: Icon(Icons.calendar_today),
                  onTap: () async {
                    DateTime? picked = await pickDate(selectedDate);
@@ -325,19 +324,8 @@ class TerminCreateState extends State<TerminCreatePage> {
                                Navigator.of(context).pop(t);
                              } else {
                                if(selectedWeekdays.isEmpty) {
-                                 if(mounted){ //TODO: Dalassen, wegen anderer positionierung als normal
-                                   ScaffoldMessenger.of(context).showSnackBar(
-                                     SnackBar(
-                                       content: Text("Keinen Tag ausgewählt!"),
-                                       duration: Duration(seconds: 3),
-                                       behavior: SnackBarBehavior.floating,
-                                       margin: EdgeInsets.only(bottom: 150, left: 10,right: 10),
-                                       shape: RoundedRectangleBorder(
-                                           borderRadius: BorderRadius.circular(10)
-                                       ),
-                                       showCloseIcon: true,
-                                     ),
-                                   );
+                                 if(mounted){
+                                   Utilities().showFloatingSnackBar(context, "Keinen Tag ausgewählt!");
                                  }
                                   return;
                                 }

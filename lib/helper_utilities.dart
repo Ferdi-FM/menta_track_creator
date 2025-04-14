@@ -207,4 +207,21 @@ class Utilities {
       );
     }
   }
+
+  void showFloatingSnackBar(BuildContext context, String text){
+    if(context.mounted){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Keinen Tag ausgewählt!"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(bottom: 150, left: 10,right: 10),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)
+          ),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
 }

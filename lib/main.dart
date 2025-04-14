@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:menta_track_creator/database_helper.dart';
-
 import 'package:menta_track_creator/person_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,12 +29,12 @@ class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: "MentATrack Creator",
       navigatorKey: navigatorKey,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       supportedLocales: [
-        const Locale('de', 'DE'),
-        const Locale('en', 'GB'),
+        const Locale("de", "DE"),
+        const Locale("en", "GB"),
       ],
       theme: ThemeData(
         fontFamily: "Comfortaa",
