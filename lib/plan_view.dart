@@ -364,6 +364,38 @@ class MyHomePageState extends State<PlanView>{
       ),
       headers: calendarHeaders,
       tasks: tasks,
+      TapOnEmptyField: (day, hour)async{
+        DateTime clickedTime = widget.start.add(Duration(days: day, hours: hour));
+        final result = await Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
+                startDate: widget.start,
+                endDate: widget.end,
+                userName: widget.userName,
+                existingStartTime: clickedTime,
+                existingEndTime: clickedTime.add(Duration(hours: 1)),
+                existingName: "",
+                existingIndex: day,
+                terminToUpdate: false,
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                const begin = Offset(1.0, 0.0);
+                const end = Offset.zero;
+                const curve = Curves.easeInOut;
+                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                var offsetAnimation = animation.drive(tween);
+
+                return SlideTransition(
+                  position: offsetAnimation,
+                  child: child,
+                );
+              },
+            )
+        );
+        if(result != null){
+          updateCalendar();
+        }
+      },
     );
   }
 
@@ -397,6 +429,19 @@ class MyHomePageState extends State<PlanView>{
                         CreateQRCode().showQrCode(context, terminList);
                       }
                     },
+                  ),
+                  MenuItemButton(
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(Icons.help_rounded),
+                          SizedBox(width: 10),
+                          Text("Hilfe")
+                        ],
+                      ),
+                    ),
+                    onPressed: () => Utilities().showHelpDialog(context, "planView"),
                   ),
                 ],
                 builder: (BuildContext context, MenuController controller, Widget? child) {

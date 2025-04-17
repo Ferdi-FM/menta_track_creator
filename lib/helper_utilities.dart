@@ -79,6 +79,27 @@ class Utilities {
           ],
           style: TextStyle(fontSize: 10),
         );
+      case "planView":
+        mainText = TextSpan(
+          children: [
+            WidgetSpan(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Durch gedrückt halten auf ein Feld kannst du dort einen Termin erstellen", textAlign: TextAlign.center),
+                    Text("Durch Drücken auf den Button unten rechtes kannst du allgemein einen Termin erstellen", textAlign: TextAlign.center),
+                    Text("Durch Drücken auf einen Termin kannst du diesen bearbeiten", textAlign: TextAlign.center),
+                    Text("\nIm DropDown-Menü oben rechts findest du eine Option einen QR-Code für diese Periode zu erstellen", textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          style: TextStyle(fontSize: 10),
+        );
         break;
       default:
         mainText = TextSpan(

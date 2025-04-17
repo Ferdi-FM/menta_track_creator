@@ -14,6 +14,7 @@ class TerminCreatePage extends StatefulWidget {
   final DateTime? existingStartTime;
   final DateTime? existingEndTime;
   final String? existingName;
+  final int? existingIndex;
   final bool terminToUpdate;
 
   const TerminCreatePage({
@@ -23,7 +24,7 @@ class TerminCreatePage extends StatefulWidget {
     this.existingStartTime,
     this.existingEndTime,
     this.existingName, required this.userName,
-    required this.terminToUpdate});
+    required this.terminToUpdate, this.existingIndex});
 
   @override
   TerminCreateState createState() => TerminCreateState();
@@ -55,8 +56,16 @@ class TerminCreateState extends State<TerminCreatePage> {
         DateTime dt = DateTime.parse(DateFormat("yyyy-MM-dd").format(widget.existingStartTime!));
         selectedDate = dt;
         startTime = TimeOfDay.fromDateTime(widget.existingStartTime!);
-        endTime = TimeOfDay.fromDateTime(widget.existingEndTime!);
-        nameController.text = widget.existingName!;
+        if(widget.existingEndTime != null ) {
+          endTime = TimeOfDay.fromDateTime(widget.existingEndTime!);
+        } else {
+          endTime = TimeOfDay(hour: startTime.hour+1, minute: startTime.minute);
+        }
+        nameController.text = widget.existingName != null ? widget.existingName! : "";
+        if(widget.existingIndex != null) {
+          selectedWeekdays.add(widget.existingIndex!);
+          sliderValues[widget.existingIndex!] = 0;
+        }
       } else {
         selectedDate = widget.startDate;
         startTime = TimeOfDay.fromDateTime(DateTime.now());
