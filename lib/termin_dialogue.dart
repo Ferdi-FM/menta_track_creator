@@ -1,18 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-class Termin {
-  final String name;
-  final DateTime startTime;
-  final DateTime endTime;
-
-  Termin({required this.name, required this.startTime, required this.endTime});
-
-  @override
-  String toString() {
-    return "Termin(name: $name, startTime: $startTime, endTime: $endTime)";
-  }
-}
+import 'package:menta_track_creator/termin.dart';
 
 class TerminDialog {
   final DateTime startDate;

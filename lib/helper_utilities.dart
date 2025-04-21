@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
+import 'generated/l10n.dart';
+
 class Utilities {
 
   Utilities();
 
-  String getWeekDay(int w){
+  String getWeekDay(int w, bool shortVersion){
     List<String> weekdays = [
-      "Mo",
-      "Di",
-      "Mi",
-      "Do",
-      "Fr",
-      "Sa",
-      "So"
+      S.current.Mo,
+      S.current.Di,
+      S.current.Mi,
+      S.current.Do,
+      S.current.Fr,
+      S.current.Sa,
+      S.current.So
     ];
-    return weekdays[w-1];
+    return shortVersion ? weekdays[w-1].substring(0,2) : weekdays[w-1];
   }
 
   Widget getHelpBurgerMenu(BuildContext context, String pageKey){
@@ -29,7 +31,7 @@ class Utilities {
                   children: [
                     Icon(Icons.help_rounded),
                     SizedBox(width: 10),
-                    Text("Hilfe")
+                    Text(S.current.help)
                   ],
                 ),
               ),
@@ -67,10 +69,10 @@ class Utilities {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Durch gedrückt halten auf einen Wochenplan kannst du diesen markieren", textAlign: TextAlign.center),
-                    Text("Darauf erscheint unten am Bildschirm ein Balken\nWenn man auf das X drückt, wird alles demarkiert\nDrückst du auf den QR-Code wird ein QR-Code für alle ausgewählten Wochen aufeinmal generiert", textAlign: TextAlign.center),
-                    Text("\nDurch Drücken auf das Kopier-Icon kannst du den Plan in eine neue Woche kopieren", textAlign: TextAlign.center),
-                    Text("\nDurch Gedrückthalten des Mülleimer-Icons kannst du einen Plan löschen", textAlign: TextAlign.center)
+                    Text(S.current.help_PersonPage_1, textAlign: TextAlign.center),
+                    Text(S.current.help_PersonPage_2, textAlign: TextAlign.center),
+                    Text(S.current.help_PersonPage_3, textAlign: TextAlign.center),
+                    Text(S.current.help_PersonPage_4, textAlign: TextAlign.center)
 
                   ],
                 ),
@@ -89,10 +91,10 @@ class Utilities {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Durch gedrückt halten auf ein Feld kannst du dort einen Termin erstellen", textAlign: TextAlign.center),
-                    Text("Durch Drücken auf den Button unten rechtes kannst du allgemein einen Termin erstellen", textAlign: TextAlign.center),
-                    Text("Durch Drücken auf einen Termin kannst du diesen bearbeiten", textAlign: TextAlign.center),
-                    Text("\nIm DropDown-Menü oben rechts findest du eine Option einen QR-Code für diese Periode zu erstellen", textAlign: TextAlign.center),
+                    Text(S.current.help_PlanView_1, textAlign: TextAlign.center),
+                    Text(S.current.help_PlanView_2, textAlign: TextAlign.center),
+                    Text(S.current.help_PlanView_3, textAlign: TextAlign.center),
+                    Text(S.current.help_PlanView_4, textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -133,7 +135,7 @@ class Utilities {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Hilfe", style: Theme.of(context).textTheme.headlineLarge),
+                  Text(S.current.help, style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 16),
                   Expanded(
                     child: ShaderMask(
@@ -187,7 +189,7 @@ class Utilities {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Löschen"),
+          title: Text(S.current.delete),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -197,13 +199,13 @@ class Utilities {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text("Löschen",style: TextStyle(color: Colors.redAccent),),
+              child: Text(S.current.delete,style: TextStyle(color: Colors.redAccent),),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
             ),
             TextButton(
-              child: Text("Abbrechen"),
+              child: Text(S.current.cancel),
               onPressed: () {
                 Navigator.of(context).pop(false);
               },),
@@ -233,7 +235,7 @@ class Utilities {
     if(context.mounted){
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Keinen Tag ausgewählt!"),
+          content: Text(text),
           duration: Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           margin: EdgeInsets.only(bottom: 150, left: 10,right: 10),

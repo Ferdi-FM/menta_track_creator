@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:menta_track_creator/termin_dialogue.dart';
+import 'package:menta_track_creator/termin.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
+import 'generated/l10n.dart';
 
 ///Klasse für alle möglichen nützlichen funktionen, die Appübergreifend genutzt werden können aber keine eigene Klasse rechtfertigen
 
@@ -16,7 +18,7 @@ class CreateQRCode{
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("QR Code"),
+          title: Text(S.current.qr_code),
           content:  SizedBox(
             width: MediaQuery.of(context).size.width*0.8,
             child: Padding(
@@ -30,7 +32,7 @@ class CreateQRCode{
           ),
           actions: [
             TextButton(
-              child: Text("Schließen"),
+              child: Text(S.current.close),
               onPressed: () {
                 Navigator.of(context).pop();
               },

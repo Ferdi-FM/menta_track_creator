@@ -1,0 +1,59 @@
+{
+  "cancel": "Cancel",
+  "add": "Add",
+  "save": "Save",
+  "delete": "Delete",
+  "from": "From",
+  "to": "Till",
+  "close": "Close",
+  "on": "on the",
+  "at": "at",
+
+
+  "main": "Add new Person",
+  "main_firstname": "first-name",
+  "main_surname": "sur-name",
+  "main_persons": "Persons",
+  "main_search": "search Person",
+  "main_noPerson": "No Person saved yet",
+  "main_newPerson": "New Person",
+
+  "qr_code": "QR Code",
+  "generate_qrCode": "generate QR-Code",
+
+
+  "Mo": "Monday",
+  "Di": "Tuesday",
+  "Mi": "Wednesday",
+  "Do": "Thursday",
+  "Fr": "Friday",
+  "Sa": "Saturday",
+  "So": "Sunday",
+
+  "plans_overlap": "The Plans overlap",
+  "no_plans_yet": "No weekly Plans yet",
+  "choose_date": "choose Date",
+
+  "week_view_wrong": "One faulty Task was deleted",
+
+  "timeStart": "Starting Time",
+  "timeEnd": "Ending Time",
+  "date": "Date",
+  "termin_creator_taskName": "Task Name",
+  "termin_creator_addAName": "Please add a Name",
+  "termin_creator_no_day_selected": "No day selected",
+
+  "help": "Help",
+  "tooltip_variation": "Variation",
+  "tooltip_variation_text": "Add the selected Duration to a Task",
+
+  "help_PersonPage_1": "By holding down on a weekly schedule, you can select it",
+  "help_PersonPage_2": "A bar will then appear at the bottom of the screen\nIf you press the X, the selection will be cleared\nIf you press the QR code, a code for all selected weeks will be generated at once",
+  "help_PersonPage_3": "\nBy pressing the copy icon, you can copy the schedule to a new week",
+  "help_PersonPage_4": "\nBy holding down the trash icon, you can delete a schedule",
+
+  "help_PlanView_1": "By long-pressing on a field, you can create a task there",
+  "help_PlanView_2": "By pressing the button in the bottom right corner, you can create a general task",
+  "help_PlanView_3": "By pressing on a task, you can edit it\n\nYou can zoom the view, it's recommended that you do so by having one finger on the left time-bar",
+  "help_PlanView_4": "\nIn the drop-down menu at the top right, you can find an option to generate a QR code for this period"
+}

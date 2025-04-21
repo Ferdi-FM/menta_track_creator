@@ -1,0 +1,58 @@
+{
+  "cancel": "Abbrechen",
+  "add": "Hinzufügen",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "from": "Von",
+  "to": "Bis",
+  "close": "Schließen",
+  "on": "am",
+  "at": "um",
+
+
+  "main": "Neue Person hinzufügen",
+  "main_firstname": "Vorname",
+  "main_surname": "Nachname",
+  "main_persons": "Personen",
+  "main_search": "Person suchen",
+  "main_noPerson": "Noch keine Personen gespeichert",
+  "main_newPerson": "Neue Person",
+
+  "qr_code": "QR Code",
+  "generate_qrCode": "QR-Code generieren",
+
+  "Mo": "Montag",
+  "Di": "Dienstag",
+  "Mi": "Mittwoch",
+  "Do": "Donnerstag",
+  "Fr": "Freitag",
+  "Sa": "Samastag",
+  "So": "Sonntag",
+
+  "plans_overlap": "Die Pläne überschneiden sich",
+  "no_plans_yet": "Noch keine Wochenpläne",
+  "choose_date": "Datum wählen",
+
+  "week_view_wrong": "Ein falsch gespeicherter Termin wurde gelöscht",
+
+  "timeStart": "Startzeit",
+  "timeEnd": "Endzeit",
+  "date": "Datum",
+  "termin_creator_taskName": "Termin Name",
+  "termin_creator_addAName": "Bitte gib einen Namen ein",
+  "termin_creator_no_day_selected": "Keinen Tag ausgewählt",
+
+  "help": "Hilfe",
+  "tooltip_variation": "Variation",
+  "tooltip_variation_text": "Fügt jedem Termin die ausgewählte Dauer  hinzu",
+
+  "help_PersonPage_1": "Durch gedrückt halten auf einen Wochenplan kannst du diesen markieren",
+  "help_PersonPage_2": "Darauf erscheint unten am Bildschirm ein Balken\nWenn man auf das X drückt, wird alles demarkiert\nDrückst du auf den QR-Code wird ein QR-Code für alle ausgewählten Wochen aufeinmal generiert",
+  "help_PersonPage_3": "\nDurch Drücken auf das Kopier-Icon kannst du den Plan in eine neue Woche kopieren",
+  "help_PersonPage_4": "\nDurch Gedrückthalten des Mülleimer-Icons kannst du einen Plan löschen",
+
+  "help_PlanView_1": "Durch gedrückt halten auf ein Feld kannst du dort einen Termin erstellen",
+  "help_PlanView_2": "Durch Drücken auf den Button unten rechtes kannst du allgemein einen Termin erstellen",
+  "help_PlanView_3": "Durch Drücken auf einen Termin kannst du diesen bearbeiten\n\nDu kannst auch Zoomen, dabei ist empfohlen einen Finger auf der linken Zeitleiste zu haben um zuverlässig zu funktionieren",
+  "help_PlanView_4": "\nIm DropDown-Menü oben rechts findest du eine Option einen QR-Code für diese Periode zu erstellen"
+}

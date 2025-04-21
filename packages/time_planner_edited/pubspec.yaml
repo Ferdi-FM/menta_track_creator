@@ -1,0 +1,9 @@
+name: time_planner
+version: 1.0.0
+description: angepasste Version des Time Planner
+environment:
+  sdk: ">=2.17.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter

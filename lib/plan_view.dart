@@ -1,15 +1,14 @@
 import 'dart:collection';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/create_qr_code.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
+import 'package:menta_track_creator/termin.dart';
 import 'package:menta_track_creator/termin_create_page.dart';
-import 'package:menta_track_creator/termin_dialogue.dart';
 import 'package:time_planner/time_planner.dart';
-
+import 'generated/l10n.dart';
 import 'main.dart';
 
 class PlanView extends StatefulWidget {
@@ -31,18 +30,16 @@ class PlanView extends StatefulWidget {
 }
 
 class MyHomePageState extends State<PlanView>{
-  DateTime calendarStart = DateTime(0);
-  List<TimePlannerTitle> calendarHeaders = [];
-  List<TimePlannerTask> tasks = [];
-  bool updated = false;
-  int rememberAnsweredTasks = 0;
-  bool hapticFeedback = false;
-  int scrollToSpecificDay = 0;
-  int scrollToSpecificHour = 0;
-  late Widget timePlanner;
-  bool loaded = false;
-  List<List<String>> overlapGroups = [];
-  List<Termin> weekAppointments = [];
+  DateTime _calendarStart = DateTime(0);
+  List<TimePlannerTitle> _calendarHeaders = [];
+  final List<TimePlannerTask> _tasks = [];
+  int _scrollToSpecificDay = 0;
+  int _scrollToSpecificHour = 0;
+  bool _loaded = false;
+  List<List<String>> _overlapGroups = [];
+  List<Termin> _weekAppointments = [];
+  bool _blockScroll = false;
+  double _overallZoom = 1;
 
   @override
   void initState() {
@@ -53,22 +50,22 @@ class MyHomePageState extends State<PlanView>{
   ///Setup vom Kalendar und den Einträgen
   void setUpCalendar1(DateTime start, DateTime end) async{
     DatabaseHelper databaseHelper = DatabaseHelper();
-    calendarStart = start;
-    int timeperiodInDays = end.difference(start).inDays;
-    calendarHeaders = [];
-    calendarHeaders = [];
+    _calendarStart = start;
+    int timePeriodInDays = end.difference(start).inDays;
+    _calendarHeaders = [];
+    _calendarHeaders = [];
 
     if(widget.scrollToSpecificDayAndHour != null){
-      scrollToSpecificHour = widget.scrollToSpecificDayAndHour!.hour;
-      scrollToSpecificDay = widget.scrollToSpecificDayAndHour!.difference(calendarStart).inDays;
+      _scrollToSpecificHour = widget.scrollToSpecificDayAndHour!.hour;
+      _scrollToSpecificDay = widget.scrollToSpecificDayAndHour!.difference(_calendarStart).inDays;
     }
 
     ///Erstellt die Köpfe der einzelnen Spalten
-    for(int i = 0; i < timeperiodInDays+1;i++){
-      DateTime date = calendarStart.add(Duration(days: i));
+    for(int i = 0; i < timePeriodInDays+1;i++){
+      DateTime date = _calendarStart.add(Duration(days: i));
       String displayDate = DateFormat("dd.MM.yy").format(date);
-      String weekDay = getWeekdayName(date);
-      calendarHeaders.add(
+      String weekDay = Utilities().getWeekDay(date.weekday,false);
+      _calendarHeaders.add(
           TimePlannerTitle(
             title: weekDay,
             date: displayDate,
@@ -77,9 +74,9 @@ class MyHomePageState extends State<PlanView>{
           ));
     }
 
-    weekAppointments = await databaseHelper.getWeekPlan(widget.userName, widget.start, widget.end);
+    _weekAppointments = await databaseHelper.getWeekPlan(widget.userName, widget.start, widget.end);
     // Liste für Gruppen von überschneidenden Terminen
-    overlapGroups = [];
+    _overlapGroups = [];
     Set<String> groupedTerminNames = {};
 
     // Funktion, um zu überprüfen, ob zwei Termine sich überschneiden
@@ -88,7 +85,7 @@ class MyHomePageState extends State<PlanView>{
     }
 
     // Gruppierung der Termine
-    for (var t1 in weekAppointments) {
+    for (var t1 in _weekAppointments) {
       String t1SafeName = "${t1.name}${t1.startTime.toIso8601String()}";
       if (groupedTerminNames.contains(t1SafeName)) continue;
 
@@ -100,7 +97,7 @@ class MyHomePageState extends State<PlanView>{
         var current = toCheck.removeFirst();
         String currentSafeName = "${current.name}${current.startTime.toIso8601String()}"; //Unique String zum Vergleichen
 
-        for (var t2 in weekAppointments) {
+        for (var t2 in _weekAppointments) {
           String t2SafeName = "${t2.name}${t2.startTime.toIso8601String()}";
 
           if (groupedTerminNames.contains(t2SafeName) || currentSafeName == t2SafeName) continue;
@@ -117,13 +114,13 @@ class MyHomePageState extends State<PlanView>{
 
       // Gruppe nur hinzufügen, wenn sie mehr als einen Termin enthält
       if (currentGroup.length > 1) {
-        overlapGroups.add(currentGroup);
+        _overlapGroups.add(currentGroup);
       }
 
       // Ursprünglichen Termin als verarbeitet markieren
       groupedTerminNames.add(t1SafeName);
     }
-    for (Termin t in weekAppointments) {
+    for (Termin t in _weekAppointments) {
       String title = t.name;
       DateTime startTime = t.startTime;
       DateTime endTime = t.endTime;
@@ -132,7 +129,7 @@ class MyHomePageState extends State<PlanView>{
       int overlapPos =  0;
       int overlapOffset = 0;
       String safeName = "${t.name}${t.startTime.toIso8601String()}";
-      for (var group in overlapGroups) {
+      for (var group in _overlapGroups) {
         if(group.contains(safeName)){
           overlapPos = group.length;
           overlapOffset = group.indexOf(safeName);
@@ -142,8 +139,7 @@ class MyHomePageState extends State<PlanView>{
     }
 
     setState(() {
-      timePlanner = createTimePlaner(cellHeight, 120);
-      loaded = true;
+      _loaded = true;
     });
   }
 
@@ -155,7 +151,7 @@ class MyHomePageState extends State<PlanView>{
 
   void updateCalendar() {
     setState(() {
-      tasks.clear();
+      _tasks.clear();
     });
     setUpCalendar1(widget.start,widget.end);
   }
@@ -163,8 +159,8 @@ class MyHomePageState extends State<PlanView>{
   ///Update wenn keine neuen Tasks hinzukommen
   void updateTasks(){
     setState(() {
-      tasks.clear();
-      for (Termin t in weekAppointments) {
+      _tasks.clear();
+      for (Termin t in _weekAppointments) {
         String title = t.name;
         DateTime startTime = t.startTime;
         DateTime endTime = t.endTime;
@@ -172,7 +168,7 @@ class MyHomePageState extends State<PlanView>{
         int overlapPos =  0;
         int overlapOffset = 0;
         String safeName = "${t.name}${t.startTime.toIso8601String()}";
-        for (var group in overlapGroups) {
+        for (var group in _overlapGroups) {
           if(group.contains(safeName)){
             overlapPos = group.length;
             overlapOffset = group.indexOf(safeName);
@@ -181,21 +177,6 @@ class MyHomePageState extends State<PlanView>{
         _addObject(title, startTime, endTime, overlapPos, overlapOffset);
       }
     });
-
-  }
-
-
-  String getWeekdayName(DateTime dateTime) {
-    List<String> weekdays = [
-      "Montag",
-      "Dienstag",
-      "Mittwoch",
-      "Donnerstag",
-      "Freitag",
-      "Samstag",
-      "Sonntag"
-    ];
-    return weekdays[dateTime.weekday - 1]; //-1 weil index bei 0 beginnt aber weekday bei 1 beginnt
   }
 
   //Konvertiert eine DateTime zu der vom package erwartetem Format (integer). errechnet differenz zwischen der 0ten Stunde am Kalender und dem Termin
@@ -215,7 +196,7 @@ class MyHomePageState extends State<PlanView>{
 
   //erzeugt Event im Kalender
   void _addObject(String title, DateTime startTime, DateTime endTime, int numberofOverlaps, int overlapOffset) { //
-    Map<String, int> convertedDate = convertToCalendarFormat(calendarStart, startTime);
+    Map<String, int> convertedDate = convertToCalendarFormat(_calendarStart, startTime);
     List<int> dayList = [convertedDate["Days"]!];
     List<int> hourList = [convertedDate["Hours"]!];
     List<int> minuteList = [convertedDate["Minutes"]!];
@@ -225,7 +206,7 @@ class MyHomePageState extends State<PlanView>{
       dayList.clear(); hourList.clear(); minuteList.clear(); durationList.clear();
       
       DateTime midNightNewDay = DateTime(endTime.year,endTime.month,endTime.day);
-      Map<String, int> convertedSecondDate = convertToCalendarFormat(calendarStart, midNightNewDay);
+      Map<String, int> convertedSecondDate = convertToCalendarFormat(_calendarStart, midNightNewDay);
       durationList.add(midNightNewDay.difference(startTime).inMinutes);
       dayList.add(convertedDate["Days"]!);
       hourList.add(convertedDate["Hours"]!);
@@ -240,13 +221,13 @@ class MyHomePageState extends State<PlanView>{
       if(duration.isNegative){
         Termin toDeleteTermin = Termin(name: title, startTime: startTime, endTime: endTime);
         DatabaseHelper().deleteTermin(widget.userName, toDeleteTermin);
-        Utilities().showSnackBar(context, "Ein Falsch gespeicherten Termin wurde gelöscht");
+        Utilities().showSnackBar(context, S.current.week_view_wrong);
         return;
       }
       double fontSize = min(cellHeight * 0.25, duration * cellHeight * 0.01);
       fontSize = fontSize.clamp(7.0, 14.0);
       setState(() {
-        tasks.add(
+        _tasks.add(
             TimePlannerTask(
               color: Colors.white70,
               dateTime: TimePlannerDateTime(
@@ -257,6 +238,7 @@ class MyHomePageState extends State<PlanView>{
               numOfOverlaps: numberofOverlaps,
               overLapOffset: overlapOffset,
               daysDuration: 1,
+              borderRadius: dayList.length > 1 ? i == 0 ? BorderRadius.vertical(top: Radius.circular(5)) : BorderRadius.vertical(bottom: Radius.circular(5)) : null,
               child:
               GestureDetector(
                   behavior: HitTestBehavior.translucent,
@@ -308,18 +290,18 @@ class MyHomePageState extends State<PlanView>{
                           Positioned(
                             top: 1,
                             left: 5,
-                            child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: cellHeight*duration/60 < 35 ? fontSize.clamp(3, 6) : fontSize.clamp(4, 9),),) : Text(""), //Ursprünglich 7 : 9
+                            child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9),),) : Text(""), //Ursprünglich 7 : 9
                           ),
                           Positioned(
                             bottom: 1,
                             left: 5,
-                            child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: cellHeight*duration/60 < 35 ? fontSize.clamp(3, 6) : fontSize.clamp(4, 9)),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
+                            child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9)),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
                           ),
                           Align(
                             alignment: Alignment.center,
                             //smargin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/1, top: duration > 30 ? 10 : duration/1), //Ursprünglich 8 : 12
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: cellHeight*duration/60 < 40 ? fontSize.clamp(0, 4) : 10),
                               child: Text(
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
@@ -344,16 +326,17 @@ class MyHomePageState extends State<PlanView>{
   }
 
   int cellHeight = 60;
-  TimePlanner createTimePlaner(int cellHeight, int cellWidth){
+  TimePlanner createTimePlaner(int cellHeight, int cellWidth, bool blockScroll){
     return TimePlanner( //index startet bei 0, 0-23 ist also 24/7
       key: UniqueKey(),
+      blockScroll: blockScroll,
       startHour: 0,
       endHour: 23,
       use24HourFormat: true,
       setTimeOnAxis: true,
       currentTimeAnimation: true,
-      animateToDefinedHour: scrollToSpecificHour,
-      animateToDefinedDay: scrollToSpecificDay,
+      animateToDefinedHour: _scrollToSpecificHour,
+      animateToDefinedDay: _scrollToSpecificDay,
       style: TimePlannerStyle(
         cellHeight: cellHeight,
         cellWidth:  cellWidth, //leider nur wenn neu gebuildet wird
@@ -362,9 +345,9 @@ class MyHomePageState extends State<PlanView>{
         interstitialEvenColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[50] : Colors.blueGrey.shade400,
         interstitialOddColor: MyApp.of(context).themeMode == ThemeMode.light ? Colors.grey[200] : Colors.blueGrey.shade500,
       ),
-      headers: calendarHeaders,
-      tasks: tasks,
-      TapOnEmptyField: (day, hour)async{
+      headers: _calendarHeaders,
+      tasks: _tasks,
+      tapOnEmptyField: (day, hour)async{
         DateTime clickedTime = widget.start.add(Duration(days: day, hours: hour));
         final result = await Navigator.of(context).push(
             PageRouteBuilder(
@@ -408,7 +391,7 @@ class MyHomePageState extends State<PlanView>{
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15))),
         actions: [
-          Padding( //Nicht die Funktion aus Utilities, da ich auf hinzufügen von Eintrag reagieren muss, was nicht durch RouteAware/DidPopNext aufgefangen wird
+          Padding(
             padding: EdgeInsets.only(right: 5),
             child: MenuAnchor(
                 menuChildren: <Widget>[
@@ -419,7 +402,7 @@ class MyHomePageState extends State<PlanView>{
                         children: [
                           Icon(Icons.help_rounded),
                           SizedBox(width: 10),
-                          Text("QR-Code generieren")
+                          Text(S.current.generate_qrCode)
                         ],
                       ),
                     ),
@@ -437,7 +420,7 @@ class MyHomePageState extends State<PlanView>{
                         children: [
                           Icon(Icons.help_rounded),
                           SizedBox(width: 10),
-                          Text("Hilfe")
+                          Text(S.current.help)
                         ],
                       ),
                     ),
@@ -471,14 +454,28 @@ class MyHomePageState extends State<PlanView>{
           child: Padding(
             padding: EdgeInsets.only(left: 0, right: 0),
             child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onScaleStart: (ev){
+                  if(ev.pointerCount > 1){
+                      setState(() {
+                        _blockScroll = true;
+                      });
+                  }
+                },
+                onScaleEnd: (ev){
+                  setState(() {
+                    _blockScroll = false;
+                  });
+                },
                 onScaleUpdate: (details) {
                   setState(() {
-                    cellHeight = (cellHeight * details.scale).toInt().clamp(35, 250);
+                    _overallZoom = details.scale;
+                    _overallZoom = _overallZoom.clamp(0.98, 1.04);
+                    cellHeight = (cellHeight * _overallZoom).toInt().clamp(35, 250);
                     updateTasks();
                   });
                 },
-              child: loaded ? createTimePlaner(cellHeight, isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt() ) : SizedBox() //index startet bei 0, 0-23 ist also 24/7
-
+              child: _loaded ? createTimePlaner(cellHeight, isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt(), _blockScroll) : SizedBox() //index startet bei 0, 0-23 ist also 24/7
             )
           ),
         );}

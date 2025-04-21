@@ -1,8 +1,7 @@
-import 'package:menta_track_creator/termin_dialogue.dart';
+import 'package:menta_track_creator/termin.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-
-import 'main.dart';
+import 'main_page.dart';
 
 
 class DatabaseHelper {

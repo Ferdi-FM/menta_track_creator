@@ -2,22 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
 
+import 'generated/l10n.dart';
+
 class RangeTile extends StatelessWidget {
   final DateTime start;
   final DateTime end;
   final String user;
   final bool isSelected;
-  final Function(dynamic ev) onItemTap;
+  final Function onItemTap;
   final VoidCallback deleteItemTap;
   final VoidCallback longPressItem;
   final VoidCallback copyPressed;
 
   const RangeTile({
-    required this.onItemTap(ev),
     super.key,
     required this.start,
     required this.end,
-    required this.deleteItemTap, required this.user, required this.longPressItem, required this.isSelected, required this.copyPressed,
+    required this.user,
+    required this.isSelected,
+    required this.deleteItemTap,
+    required this.longPressItem,
+    required this.copyPressed,
+    required this.onItemTap,
   });
 
   String getDateAndTimeFromDay(String dayString){
@@ -54,7 +60,7 @@ class RangeTile extends StatelessWidget {
               minTileHeight: 72,
               contentPadding: EdgeInsets.symmetric(horizontal: 10),
               leading: Icon(Icons.calendar_view_week),
-              title: Text("Von:  ${Utilities().getWeekDay(start.weekday)} ${DateFormat("dd.MM.yy").format(start)}\nBis:   ${Utilities().getWeekDay(end.weekday)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold)),
+              title: FittedBox(child: Text("${S.current.from}:  ${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}\n${S.current.to}:   ${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))),
               trailing: SizedBox(
                 height: 70,
                 width: 100,

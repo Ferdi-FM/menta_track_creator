@@ -1,14 +1,15 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
 import 'package:menta_track_creator/plan_view.dart';
 import 'package:menta_track_creator/range_tile.dart';
-import 'package:menta_track_creator/termin_dialogue.dart';
+import 'package:menta_track_creator/termin.dart';
 import 'package:sqflite/sqflite.dart';
 import 'create_qr_code.dart';
+import 'generated/l10n.dart';
 import 'main.dart';
+import 'main_page.dart';
 
 class PersonDetailPage extends StatefulWidget {
   final Person person;
@@ -20,8 +21,8 @@ class PersonDetailPage extends StatefulWidget {
 }
 
 class PersonDetailPageState extends State<PersonDetailPage> {
-  List<DateTimeRange> ranges = [];
-  List<DateTimeRange> selectedRanges = [];
+  final List<DateTimeRange> _ranges = [];
+  final List<DateTimeRange> _selectedRanges = [];
 
   @override
   void initState() {
@@ -32,10 +33,10 @@ class PersonDetailPageState extends State<PersonDetailPage> {
   Future<void> loadRanges() async {
     List<Map<String, dynamic>> maps = await DatabaseHelper().getPlans(widget.person.name);
     for(Map map in maps){
-      ranges.add(DateTimeRange(start: DateTime.parse(map["startDate"]), end: DateTime.parse(map["endDate"])));
+      _ranges.add(DateTimeRange(start: DateTime.parse(map["startDate"]), end: DateTime.parse(map["endDate"])));
     }
     setState(() {
-      ranges;
+      _ranges;
     });
   }
 
@@ -43,7 +44,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     DateTimeRange? picked = await showDateRangePicker(
       context: context,
       locale: const Locale("de", "DE"),
-      initialDateRange: ranges.isNotEmpty ? DateTimeRange(start: ranges.last.end.add(Duration(days: 1)), end: ranges.last.end.add(Duration(days: 7))) : DateTimeRange(start: DateTime.now(), end: DateTime.now().add(Duration(days: 6))),
+      initialDateRange: _ranges.isNotEmpty ? DateTimeRange(start: _ranges.last.end.add(Duration(days: 1)), end: _ranges.last.end.add(Duration(days: 7))) : DateTimeRange(start: DateTime.now(), end: DateTime.now().add(Duration(days: 6))),
       firstDate: DateTime(2025),
       lastDate: DateTime(2101),
     );
@@ -63,15 +64,15 @@ class PersonDetailPageState extends State<PersonDetailPage> {
             picked.end.toIso8601String(),]
       );
       if(maps.isNotEmpty){
-        if(mounted)Utilities().showSnackBar(context, "Die Pläne überschneiden sich!");
+        if(mounted)Utilities().showSnackBar(context, S.current.plans_overlap);
       } else {
         if(index == null){
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
           setState(() {
-            ranges.add(picked);
+            _ranges.add(picked);
           });
         } else {
-          List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.name, ranges[index].start, ranges[index].end);
+          List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.name, _ranges[index].start, _ranges[index].end);
           DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.name);
           DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
           for(Termin t in tList){
@@ -89,7 +90,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
             DatabaseHelper().insertTermin(newT, widget.person.name);
           }
           setState(() {
-            ranges.add(picked);
+            _ranges.add(picked);
           });
 
         }
@@ -127,9 +128,9 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           title: Text(widget.person.name),
           leading: IconButton(
               onPressed: (){
-                if(selectedRanges.isNotEmpty){
+                if(_selectedRanges.isNotEmpty){
                   setState(() {
-                    selectedRanges.clear();
+                    _selectedRanges.clear();
                   });
                 } else {
                   navigatorKey.currentState?.pop();
@@ -144,7 +145,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
         children: [
           Column(
             children: [
-              if(ranges.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text("Noch keine Wochenpläne", textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
+              if(_ranges.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.no_plans_yet, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
               Expanded(
                 child: ShaderMask(
                   shaderCallback: (Rect bounds) {
@@ -162,19 +163,24 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                   },
                   blendMode: BlendMode.dstIn,
                   child:ListView.builder(
-                    itemCount: ranges.length,
+                    itemCount: _ranges.length,
                     itemBuilder: (context, index) {
-                      final range = ranges[index];
+                      final range = _ranges[index];
                       return Padding(
                         padding: EdgeInsets.only(top: index == 0 ? 20 : 0),
                         child: RangeTile(
-                          isSelected: selectedRanges.contains(range),
+                          isSelected: _selectedRanges.contains(range),
                           onItemTap: (ev)  {
-                            openCalendar(range.start, range.end);
+                            if(_selectedRanges.isNotEmpty){
+                              if(!_selectedRanges.contains(range)){
+                                _selectedRanges.add(range);
+                              }
+                            } else {
+                              openCalendar(range.start, range.end);}
                           },
                           deleteItemTap: (){
                             setState(() {
-                              ranges.removeAt(index);
+                              _ranges.removeAt(index);
                               DatabaseHelper().deleteWeekPlan(range.start, range.end, widget.person.name);
                             });
                           },
@@ -184,10 +190,10 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                           user: widget.person.name,
                           longPressItem: () async {
                             setState(() {
-                              if(selectedRanges.contains(range)){
-                                selectedRanges.remove(range);
+                              if(_selectedRanges.contains(range)){
+                                _selectedRanges.remove(range);
                               } else {
-                                selectedRanges.add(range);
+                                _selectedRanges.add(range);
                               }
                             });
                             //List<Termin> l = await DatabaseHelper().getWeekPlan(user, start, end);
@@ -201,7 +207,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
               )
             ],
           ),
-          if(selectedRanges.isNotEmpty) Positioned(
+          if(_selectedRanges.isNotEmpty) Positioned(
             bottom: 0,
               left: 0,
               right: 0,
@@ -221,14 +227,14 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                     child: TextButton(
                         onPressed: (){
                           setState(() {
-                            selectedRanges.clear();
+                            _selectedRanges.clear();
                           });
                         },
                         child: Icon(Icons.close, size: 30,)),),
                   SingleChildScrollView(
                     child: Column(
                       children: [
-                        for(DateTimeRange ran in selectedRanges)...{
+                        for(DateTimeRange ran in _selectedRanges)...{
                           Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
                         }
                       ],
@@ -239,7 +245,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                       child: TextButton(
                           onPressed: () async {
                             List<Termin> allList = [];
-                            for(DateTimeRange range in selectedRanges){
+                            for(DateTimeRange range in _selectedRanges){
                               List<Termin> l = await DatabaseHelper().getWeekPlan(widget.person.name, range.start, range.end);
                               allList.addAll(l);
                             }
@@ -253,9 +259,9 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           )
         ],
       ),
-      floatingActionButton: selectedRanges.isEmpty ? FloatingActionButton(
+      floatingActionButton: _selectedRanges.isEmpty ? FloatingActionButton(
         onPressed: _showDateRangePicker,
-        tooltip: 'Datum wählen',
+        tooltip: S.current.choose_date,
         child: Icon(Icons.add_task),
       ) : SizedBox(),
     );
