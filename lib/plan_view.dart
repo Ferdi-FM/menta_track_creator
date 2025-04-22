@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:menta_track_creator/create_qr_code.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
+import 'package:menta_track_creator/person.dart';
 import 'package:menta_track_creator/termin.dart';
 import 'package:menta_track_creator/termin_create_page.dart';
 import 'package:time_planner/time_planner.dart';
@@ -16,13 +17,13 @@ class PlanView extends StatefulWidget {
     super.key,
     required this.start,
     required this.end,
-    required this.userName,
+    required this.person,
     this.scrollToSpecificDayAndHour
   });
 
   final DateTime start;
   final DateTime end;
-  final String userName;
+  final Person person;
   final DateTime? scrollToSpecificDayAndHour;
 
   @override
@@ -74,7 +75,7 @@ class MyHomePageState extends State<PlanView>{
           ));
     }
 
-    _weekAppointments = await databaseHelper.getWeekPlan(widget.userName, widget.start, widget.end);
+    _weekAppointments = await databaseHelper.getWeekPlan(widget.person.id, widget.start, widget.end);
     // Liste für Gruppen von überschneidenden Terminen
     _overlapGroups = [];
     Set<String> groupedTerminNames = {};
@@ -220,7 +221,7 @@ class MyHomePageState extends State<PlanView>{
       int duration = durationList[i];
       if(duration.isNegative){
         Termin toDeleteTermin = Termin(name: title, startTime: startTime, endTime: endTime);
-        DatabaseHelper().deleteTermin(widget.userName, toDeleteTermin);
+        DatabaseHelper().deleteTermin(widget.person.id, toDeleteTermin);
         Utilities().showSnackBar(context, S.current.week_view_wrong);
         return;
       }
@@ -250,7 +251,7 @@ class MyHomePageState extends State<PlanView>{
                           pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
                             startDate: widget.start,
                             endDate: widget.end,
-                            userName: widget.userName,
+                            personId: widget.person.id,
                             terminToUpdate: true,
                             existingStartTime: startTime,
                             existingEndTime: endTime,
@@ -271,7 +272,7 @@ class MyHomePageState extends State<PlanView>{
                     if(result != null){
                       if(result == true) {
                       } else {
-                        await DatabaseHelper().updateTermin(widget.userName, oldTermin, result);
+                        await DatabaseHelper().updateTermin(widget.person.id, oldTermin, result);
                       }
                       updateCalendar();
                     }
@@ -354,7 +355,7 @@ class MyHomePageState extends State<PlanView>{
               pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
                 startDate: widget.start,
                 endDate: widget.end,
-                userName: widget.userName,
+                personId: widget.person.id,
                 existingStartTime: clickedTime,
                 existingEndTime: clickedTime.add(Duration(hours: 1)),
                 existingName: "",
@@ -407,7 +408,7 @@ class MyHomePageState extends State<PlanView>{
                       ),
                     ),
                     onPressed: () async {
-                      List<Termin> terminList = await DatabaseHelper().getWeekPlan(widget.userName, widget.start, widget.end);
+                      List<Termin> terminList = await DatabaseHelper().getWeekPlan(widget.person.id, widget.start, widget.end);
                       if(context.mounted){
                         CreateQRCode().showQrCode(context, terminList);
                       }
@@ -487,7 +488,7 @@ class MyHomePageState extends State<PlanView>{
                 pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
                   startDate: widget.start,
                   endDate: widget.end,
-                  userName: widget.userName,
+                  personId: widget.person.id,
                   terminToUpdate: false,
                 ),
                 transitionsBuilder: (context, animation, secondaryAnimation, child) {

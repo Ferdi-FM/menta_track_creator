@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:menta_track_creator/database_helper.dart';
+import 'package:menta_track_creator/person.dart';
 import 'package:menta_track_creator/person_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 import 'generated/l10n.dart';
 import 'main.dart';
 
@@ -16,6 +18,7 @@ class MyHomePageState extends State<MyHomePage> {
   List<Person> _persons = [];
   final TextEditingController _searchController = TextEditingController();
   bool _themeModeBool = true;
+  late Database db;
 
   @override
   void initState(){
@@ -25,6 +28,7 @@ class MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> loadTheme() async {
+    db = await DatabaseHelper().database;
     SharedPreferences pref = await SharedPreferences.getInstance();
     _themeModeBool = pref.getBool("darkMode") ?? ThemeMode.system == ThemeMode.dark ? true : false;
     if(mounted) MyApp.of(context).changeTheme(_themeModeBool ? ThemeMode.dark : ThemeMode.light);
@@ -47,10 +51,10 @@ class MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _addPerson(String firstName, String lastName) {
+  Future<void> _addPerson(String firstName, String lastName) async {
+    final id = await DatabaseHelper().insertPerson(firstName, lastName);
     setState(() {
-      _persons.add(Person(name: "$firstName $lastName"));
-      DatabaseHelper().insertPerson(firstName, lastName);
+      _persons.add(Person(id: id,name: "$firstName $lastName"));
     });
   }
 
@@ -155,6 +159,9 @@ class MyHomePageState extends State<MyHomePage> {
               onChanged: (ev){
                 searchPersons(ev);
               },
+              onTapOutside: (ev){
+                FocusScope.of(context).unfocus();
+              },
             ),
             SizedBox(height: 20,),
             if(_persons.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.main_noPerson, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
@@ -221,7 +228,7 @@ class MyHomePageState extends State<MyHomePage> {
                                     onPressed: (){
                                       setState(() {
                                         _persons.removeAt(index);
-                                        DatabaseHelper().deletePerson(person.name);
+                                        DatabaseHelper().deletePerson(person.id);
                                       });
                                     },
                                     icon: Icon(Icons.delete)),
@@ -245,10 +252,4 @@ class MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-}
-
-class Person {
-  String name;
-
-  Person({required this.name});
 }

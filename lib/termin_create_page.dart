@@ -8,7 +8,7 @@ import 'generated/l10n.dart';
 class TerminCreatePage extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
-  final String userName;
+  final int personId;
 
   final DateTime? existingStartTime;
   final DateTime? existingEndTime;
@@ -22,8 +22,10 @@ class TerminCreatePage extends StatefulWidget {
     required this.endDate,
     this.existingStartTime,
     this.existingEndTime,
-    this.existingName, required this.userName,
-    required this.terminToUpdate, this.existingIndex});
+    this.existingName,
+    required this.personId,
+    required this.terminToUpdate,
+    this.existingIndex});
 
   @override
   TerminCreateState createState() => TerminCreateState();
@@ -348,7 +350,7 @@ class TerminCreateState extends State<TerminCreatePage> {
                                      iterativeEndTime = iterativeEndTime.add(Duration(minutes: _sliderValues[_selectedWeekdays[i]]!));
 
                                      Termin t = Termin(name: _nameController.text, startTime: iterativeStartTime, endTime: iterativeEndTime);
-                                     DatabaseHelper().insertTermin(t, widget.userName);
+                                     DatabaseHelper().insertTermin(t, widget.personId);
                                    }
                                    Navigator.of(context).pop(
                                        true
@@ -366,7 +368,7 @@ class TerminCreateState extends State<TerminCreatePage> {
                        ),
                        if(widget.terminToUpdate)TextButton(
                            onPressed: (){
-                             DatabaseHelper().deleteTermin(widget.userName, Termin(name: widget.existingName!, startTime: widget.existingStartTime!, endTime: widget.existingEndTime!));
+                             DatabaseHelper().deleteTermin(widget.personId, Termin(name: widget.existingName!, startTime: widget.existingStartTime!, endTime: widget.existingEndTime!));
                              Navigator.of(context).pop(true);
                            },
                            child: Container(

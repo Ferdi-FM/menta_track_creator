@@ -8,6 +8,7 @@
   "close": "Schließen",
   "on": "am",
   "at": "um",
+  "update": "Update",
 
 
   "main": "Neue Person hinzufügen",
@@ -41,6 +42,14 @@
   "termin_creator_taskName": "Termin Name",
   "termin_creator_addAName": "Bitte gib einen Namen ein",
   "termin_creator_no_day_selected": "Keinen Tag ausgewählt",
+
+  "comments_updateNote": "Notiz updaten",
+  "comments_addNote": "Notiz hinzufügen",
+  "comments_title": "Titel",
+  "comments_note": "{count, plural, =1{Notiz} other{Notizen}}",
+  "comment_deleted": "Notiz wurde gelöscht",
+  "comment_undo": "Rückgängig",
+
 
   "help": "Hilfe",
   "tooltip_variation": "Variation",

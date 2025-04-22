@@ -35,7 +35,7 @@ class RangeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 5.5, horizontal: 16.0),
+      margin: EdgeInsets.symmetric(horizontal: 16.0),
       elevation: 10,
       child: Container(
         decoration: BoxDecoration( //rechte seite

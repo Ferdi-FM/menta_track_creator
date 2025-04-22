@@ -8,6 +8,7 @@
   "close": "Close",
   "on": "on the",
   "at": "at",
+  "update": "update",
 
 
   "main": "Add new Person",
@@ -42,6 +43,14 @@
   "termin_creator_taskName": "Task Name",
   "termin_creator_addAName": "Please add a Name",
   "termin_creator_no_day_selected": "No day selected",
+
+  "comments_updateNote": "Update Note",
+  "comments_addNote": "Add Note",
+  "comments_title": "Title",
+  "comments_note": "{count, plural, =0{Note} other{Notes}}",
+  "comment_deleted": "Note was deleted",
+  "comment_undo": "Undo",
+
 
   "help": "Help",
   "tooltip_variation": "Variation",

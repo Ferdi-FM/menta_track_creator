@@ -1,7 +1,7 @@
+import 'package:menta_track_creator/person.dart';
 import 'package:menta_track_creator/termin.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'main_page.dart';
 
 
 class DatabaseHelper {
@@ -16,7 +16,7 @@ class DatabaseHelper {
   Future<Database> initDatabase() async {
     String path = await getDatabasesPath();
     return openDatabase(
-      join(path, "person_plans_ver3.db"),
+      join(path, "person_plans_v1.db"),
       onCreate: (db, version) async {
         await db.execute('''
          CREATE TABLE Persons(
@@ -28,48 +28,127 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE createdPlans(
             id INTEGER PRIMARY KEY,
-            personName TEXT,
+            personId INTEGER,
             startDate TEXT,
-            endDate TEXT
+            endDate TEXT,
+            FOREIGN KEY(personId) REFERENCES Persons(id)
           )
         ''');
 
         await db.execute('''
           CREATE TABLE createdTermine(
             id INTEGER PRIMARY KEY,
-            personName TEXT,
+            personId INTEGER,
             terminName TEXT,
             timeBegin TEXT,
-            timeEnd TEXT
+            timeEnd TEXT,
+            FOREIGN KEY(personId) REFERENCES Persons(id)
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE comments(
+            id INTEGER PRIMARY KEY,
+            personId INTEGER,
+            commentTitle TEXT,
+            commentText TEXT,
+            sortIndex INTEGER,
+            FOREIGN KEY(personId) REFERENCES Persons(id)
           )
         ''');
       },
-      version: 2,
+      version: 1,
     );
   }
 
+  Future<void> updateComment(int personId, String title, String comment, String editTitle, String editComment) async {
+    final db = await database;
+    await db.update(
+      "comments",
+        {
+          "commentTitle": editTitle,
+          "commentText": editComment
+        },
+        where: "personId = ? AND commentTitle = ? AND commentText = ?",
+        whereArgs: [personId,title,comment]);
+  }
 
+  Future<void> updateCommentList(int personId, List<Map<String,dynamic>> updatedList) async {
+    final db = await database;
+    final batch = db.batch();
 
-  Future<void> insertPlan(DateTime startTime, DateTime endDate, String name) async {
+    for (int i = 0; i < updatedList.length; i++){
+      Map<String, dynamic> map = updatedList[i];
+      String title = map["commentTitle"];
+      String comment = map["commentText"];
+      batch.update(
+          "comments",
+          {
+            "sortIndex": i
+          },
+          where: "personId = ? AND commentTitle = ? AND commentText = ?",
+          whereArgs: [personId,title,comment]
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<Map<String, dynamic>>> getComment(int personId) async {
+    final db = await database;
+    List<Map<String, dynamic>> maps = await db.query(
+      "comments",
+      where: "personId = ?",
+      whereArgs: [personId],
+    );
+    return maps;
+  }
+
+  Future<void> insertComment(int personId, String title, String comment, int index) async {
+    final db = await database;
+    await db.insert(
+      "comments",
+      {
+        "personId": personId,
+        "commentTitle":title,
+        "commentText":comment,
+        "sortIndex": index
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+
+  }
+
+  Future<void> deleteComment(int personId, String title, String comment) async {
+    final db = await database;
+    await db.delete (
+      "comments",
+      where: "personId = ? AND commentTitle = ? AND commentText = ?",
+      whereArgs: [personId, title,comment]
+    );
+  }
+
+  Future<void> insertPlan(DateTime startTime, DateTime endDate, int personId) async {
     final db = await database;
     await db.insert(
       "createdPlans",
-      { "personName": name,
+      {
+        "personId": personId,
         "startDate": startTime.toIso8601String(),
-        "endDate": endDate.toIso8601String()},
+        "endDate": endDate.toIso8601String()
+      },
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
   }
 
-  Future<List<Termin>> getWeekPlan(String name, DateTime startDate, DateTime endDate) async {
+  Future<List<Termin>> getWeekPlan(int personId, DateTime startDate, DateTime endDate) async {
     final db = await database;
     String startDateString = startDate.toIso8601String();
     DateTime endDateTime = DateTime(endDate.year,endDate.month,endDate.day,23,59,59);
     String endDateString = endDateTime.toIso8601String();
     List<Map<String, dynamic>> maps = await db.query(
       "createdTermine",
-      where: "personName = ? AND (datetime(timeBegin) BETWEEN datetime(?) AND datetime(?))",
-      whereArgs: [name, startDateString, endDateString],
+      where: "personId = ? AND (datetime(timeBegin) BETWEEN datetime(?) AND datetime(?))",
+      whereArgs: [personId, startDateString, endDateString],
     );
     return toTerminList(maps);
   }
@@ -87,25 +166,25 @@ class DatabaseHelper {
     return terminList;
   }
 
-  Future<List<Map<String, dynamic>>> getPlans(String name) async {
+  Future<List<Map<String, dynamic>>> getPlans(int personId) async {
     final db = await database;
     List<Map<String,dynamic>> maps = await db.query(
       "createdPlans",
-      where: "personName = ?",
-      whereArgs: [name],
+      where: "personId = ?",
+      whereArgs: [personId],
     );
 
     return maps;
   }
 
-  Future<void> insertTermin(Termin termin, String name) async {
+  Future<void> insertTermin(Termin termin, int personId) async {
     final db = await database;
 
     //Erstellt die Tabelle mit dem ersten Tag der Woche in der Tabelle WeeklyPlans.
     await db.insert(
       "createdTermine",
       {
-        "personName": name,
+        "personId": personId,
         "terminName": termin.name,
         "timeBegin": termin.startTime.toIso8601String(),
         "timeEnd": termin.endTime.toIso8601String()
@@ -119,11 +198,11 @@ class DatabaseHelper {
     return await db.query("createdTermine");
   }
 
-  Future<void> insertPerson(String name, String lastName) async {
+  Future<int> insertPerson(String name, String lastName) async {
     final db = await database;
 
     //Erstellt die Tabelle mit dem ersten Tag der Woche in der Tabelle WeeklyPlans.
-    await db.insert(
+    return await db.insert(
       "Persons",
       {"name": "$name $lastName"},
       conflictAlgorithm: ConflictAlgorithm.ignore,
@@ -145,13 +224,13 @@ class DatabaseHelper {
     }
     List<Person> personList = [];
     for(Map map in maps){
-      Person p = Person(name: map["name"]);
+      Person p = Person(name: map["name"], id: map["id"]);
       personList.add(p);
     }
     return personList;
   }
 
-  Future<void> updateTermin(String userName, Termin oldTermin, Termin updatedTermin) async {
+  Future<void> updateTermin(int personId, Termin oldTermin, Termin updatedTermin) async {
     final db = await database;
     await db.update(
       "createdTermine",
@@ -160,64 +239,64 @@ class DatabaseHelper {
         "timeBegin": updatedTermin.startTime.toIso8601String(),
         "timeEnd": updatedTermin.endTime.toIso8601String()
       },
-      where: "personName = ? AND terminName = ? AND timeBegin = ? AND timeEnd = ?",
-      whereArgs: [userName, oldTermin.name, oldTermin.startTime.toIso8601String(), oldTermin.endTime.toIso8601String()],
+      where: "personId = ? AND terminName = ? AND timeBegin = ? AND timeEnd = ?",
+      whereArgs: [personId, oldTermin.name, oldTermin.startTime.toIso8601String(), oldTermin.endTime.toIso8601String()],
     );
   }
 
-  Future<void> updatePerson(String oldFirstName, String oldLastName, String newFirstName, String newLastName) async {
-    final db = await database;
-    await db.update(
-      "Persons",
-      {"firstName": newFirstName, "lastName": newLastName},
-      where: "firstName = ? AND lastName = ?",
-      whereArgs: [oldFirstName, oldLastName],
-    );
-  }
+  //Future<void> updatePerson(String oldFirstName, String oldLastName, String newFirstName, String newLastName) async {
+  //  final db = await database;
+  //  await db.update(
+  //    "Persons",
+  //    {"firstName": newFirstName, "lastName": newLastName},
+  //    where: "firstName = ? AND lastName = ?",
+  //    whereArgs: [oldFirstName, oldLastName],
+  //  );
+  //}
 
-  Future<void> deleteTermin(String name, Termin termin) async {
+  Future<void> deleteTermin(int personId, Termin termin) async {
     final db = await database;
     await db.delete(
       "createdTermine",
-      where: "personName = ? AND terminName = ? AND timeBegin = ? AND timeEnd = ?",
-      whereArgs: [name, termin.name, termin.startTime.toIso8601String(), termin.endTime.toIso8601String()],
+      where: "personId = ? AND terminName = ? AND timeBegin = ? AND timeEnd = ?",
+      whereArgs: [personId, termin.name, termin.startTime.toIso8601String(), termin.endTime.toIso8601String()],
     );
   }
 
-  Future<void> deleteWeekPlan(DateTime startDate, DateTime endDate, String name) async {
+  Future<void> deleteWeekPlan(DateTime startDate, DateTime endDate, int personId) async {
     final db = await database;
     await db.delete(
         "createdPlans",
-        where: "personName = ? AND startDate = ? AND endDate = ?",
-        whereArgs: [name, startDate.toIso8601String(), endDate.toIso8601String()]
+        where: "personId = ? AND startDate = ? AND endDate = ?",
+        whereArgs: [personId, startDate.toIso8601String(), endDate.toIso8601String()]
     );
     await db.delete(
         "createdTermine",
         where: """
-              personName = ?
+              personId = ?
               AND datetime(?) >= datetime(timeBegin) 
               AND datetime(?) <= datetime(timeEnd)
             """,
-        whereArgs: [name, startDate.toIso8601String(), endDate.toIso8601String()]
+        whereArgs: [personId, startDate.toIso8601String(), endDate.toIso8601String()]
     );
   }
 
-  Future<void> deletePerson(String personName) async {
+  Future<void> deletePerson(int personId) async {
     final db = await database;
     await db.delete(
         "createdPlans",
-        where: "personName = ?",
-        whereArgs: [personName]
+        where: "personId = ?",
+        whereArgs: [personId]
     );
     await db.delete(
         "createdTermine",
-        where: "personName = ?",
-        whereArgs: [personName]
+        where: "personId = ?",
+        whereArgs: [personId]
     );
     await db.delete(
         "Persons",
-        where: "name = ?",
-        whereArgs: [personName]
+        where: "personId = ?",
+        whereArgs: [personId]
     );
   }
 
