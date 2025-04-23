@@ -128,7 +128,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Stack(children: [Scaffold(
       appBar: AppBar(
           title: Text(widget.person.name),
           leading: IconButton(
@@ -152,6 +152,9 @@ class PersonDetailPageState extends State<PersonDetailPage> {
             onPageChanged: (ev){
               setState(() {
                 currentPage = ev;
+                if(currentPage == 1){
+                  _selectedRanges.clear();
+                }
               });
             },
             controller: pageController,
@@ -195,9 +198,13 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                               isSelected: _selectedRanges.contains(range),
                               onItemTap: (ev)  {
                                 if(_selectedRanges.isNotEmpty){
-                                  if(!_selectedRanges.contains(range)){
-                                    _selectedRanges.add(range);
-                                  }
+                                  setState(() {
+                                    if(!_selectedRanges.contains(range)){
+                                      _selectedRanges.add(range);
+                                    } else {
+                                      _selectedRanges.remove(range);
+                                    }
+                                  });
                                 } else {
                                   openCalendar(range.start, range.end);}
                               },
@@ -228,51 +235,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                       ),
                     ),
                   ),
-                  if(_selectedRanges.isNotEmpty) Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
-                            color: Theme.of(context).listTileTheme.tileColor
-                        ),
-                        height: MediaQuery.of(context).size.height*0.08,
-                        child: Padding(
-                            padding: EdgeInsets.all(10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: TextButton(
-                                      onPressed: (){
-                                        setState(() {
-                                          _selectedRanges.clear();
-                                        });
-                                      },
-                                      child: Icon(Icons.close, size: 30,)),),
-                                SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      for(DateTimeRange ran in _selectedRanges)...{
-                                        Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
-                                      }
-                                    ],
-                                  ),
-                                ),
-                                FittedBox(
-                                    fit: BoxFit.contain,
-                                    child: TextButton(
-                                        onPressed: () async {
-                                          List<Termin> allList = [];
-                                          for(DateTimeRange range in _selectedRanges){
-                                            List<Termin> l = await DatabaseHelper().getWeekPlan(widget.person.id, range.start, range.end);
-                                            allList.addAll(l);
-                                          }
-                                          if(context.mounted)CreateQRCode().showQrCode(context, allList);
-                                        },
-                                        child: Icon(Icons.qr_code_2, size: 32,))),
-                              ],
-                            )
-                        ),
-                      )
+
                 ],
               ),
               CommentPage(person: widget.person)
@@ -290,7 +253,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
         child: BottomNavigationBar(
           showUnselectedLabels: true,
           elevation: 15,
-          //backgroundColor: MyApp.of(context).themeMode == ThemeMode.dark ? Colors.transparent : Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+          backgroundColor: Colors.transparent,
           currentIndex: currentPage,
           onTap: (int index) async {
             setState(() {
@@ -321,6 +284,58 @@ class PersonDetailPageState extends State<PersonDetailPage> {
         tooltip: S.current.choose_date,
         child: Icon(Icons.add_task),
       ) : SizedBox(),
+    ),
+      if(_selectedRanges.isNotEmpty) Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                color: Theme.of(context).listTileTheme.tileColor
+            ),
+            height: MediaQuery.of(context).size.height*0.08,
+            child: Padding(
+                padding: EdgeInsets.all(10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.contain,
+                      child: TextButton(
+                          onPressed: (){
+                            setState(() {
+                              _selectedRanges.clear();
+                            });
+                          },
+                          child: Icon(Icons.close, size: 30,)),),
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          for(DateTimeRange ran in _selectedRanges)...{
+                            Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
+                          }
+                        ],
+                      ),
+                    ),
+                    FittedBox(
+                        fit: BoxFit.contain,
+                        child: TextButton(
+                            onPressed: () async {
+                              List<Termin> allList = [];
+                              for(DateTimeRange range in _selectedRanges){
+                                List<Termin> l = await DatabaseHelper().getWeekPlan(widget.person.id, range.start, range.end);
+                                allList.addAll(l);
+                              }
+                              if(context.mounted)CreateQRCode().showQrCode(context, allList);
+                            },
+                            child: Icon(Icons.qr_code_2, size: 32,))),
+                  ],
+                )
+            ),
+          )
+      )
+    ]
     );
   }
 

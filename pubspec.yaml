@@ -44,6 +44,7 @@ dependencies:
   shared_preferences: ^2.5.3
   time_planner:
     path: packages/time_planner_edited
+  auto_size_text: ^3.0.0
 
 dev_dependencies:
   flutter_test:

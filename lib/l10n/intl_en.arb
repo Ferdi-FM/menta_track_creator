@@ -47,9 +47,10 @@
   "comments_updateNote": "Update Note",
   "comments_addNote": "Add Note",
   "comments_title": "Title",
-  "comments_note": "{count, plural, =0{Note} other{Notes}}",
+  "comments_note": "{count, plural, =1{Note} other{Notes}}",
   "comment_deleted": "Note was deleted",
   "comment_undo": "Undo",
+  "comment_noNotes": "No Notes yet",
 
 
   "help": "Help",

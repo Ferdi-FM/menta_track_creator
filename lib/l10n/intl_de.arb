@@ -49,6 +49,7 @@
   "comments_note": "{count, plural, =1{Notiz} other{Notizen}}",
   "comment_deleted": "Notiz wurde gelöscht",
   "comment_undo": "Rückgängig",
+  "comment_noNotes": "Noch keine Notizen",
 
 
   "help": "Hilfe",

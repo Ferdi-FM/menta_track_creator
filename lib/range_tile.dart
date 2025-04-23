@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
@@ -35,7 +36,7 @@ class RangeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16.0),
+      margin: EdgeInsets.symmetric(horizontal: 14.0),
       elevation: 10,
       child: Container(
         decoration: BoxDecoration( //rechte seite
@@ -60,38 +61,101 @@ class RangeTile extends StatelessWidget {
               minTileHeight: 72,
               contentPadding: EdgeInsets.symmetric(horizontal: 10),
               leading: Icon(Icons.calendar_view_week),
-              title: FittedBox(child: Text("${S.current.from}:  ${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}\n${S.current.to}:   ${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))),
-              trailing: SizedBox(
-                height: 70,
-                width: 100,
-                child: FittedBox(
-                    child:  Row(
-                  spacing: 0,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.fitHeight,
-                        child: TextButton(
-                            onPressed: () {copyPressed();},
-                            child: Icon(Icons.copy, size: 32,)),
+              title: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                           AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold)),
+                           AutoSizeText("${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold))
+                        ],
                       ),
-                    FittedBox(
-                        child: TextButton(
-                            onLongPress: (){
-                              deleteItemTap();
-                            },
-                            onPressed: () {  },
-                            child: Icon(Icons.delete, size: 32,)),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold)),
+                          AutoSizeText("${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))
+                        ],
                       )
-                  ],
-                )
+                    ],
+              ),
+              trailing: Padding(padding: EdgeInsets.only(top: 12, bottom: 12, left: 8, right: 10),
+                  child: FittedBox(
+                    child:   Row(
+                      spacing: 13,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.fitHeight,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                              onTap: () {copyPressed();},
+                              child: Padding(padding: EdgeInsets.all(3),
+                                child: Icon(Icons.copy, size: 32,),)
+
+                              ),
+                        ),
+                        FittedBox(
+                          child: InkWell(
+                              onLongPress: (){
+                                deleteItemTap();
+                              },
+                              child: Padding(padding: EdgeInsets.all(3),
+                                child: Icon(Icons.delete_outline, size: 32,),)),
+                        )
+                      ],
+                    ),)
                 ),
               )
             ),
           ),
         ),
-      ),
     );
   }
 }
+
+
+/* Alternativer Title
+Table(
+                columnWidths: {
+                  0: IntrinsicColumnWidth(),
+                  1: IntrinsicColumnWidth(),
+                  2: FlexColumnWidth()
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  TableRow(children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      child:  Text("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Text("${Utilities().getWeekDay(start.weekday,true)}", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      child: Text("${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold))
+                    )
+
+                  ]),
+                  TableRow(children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      child:  Text("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Text("${Utilities().getWeekDay(end.weekday,true)}", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2),
+                        child: Text("${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))
+                    )
+                  ]),
+                ],
+              ),
+
+ */

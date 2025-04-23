@@ -147,8 +147,8 @@ class DatabaseHelper {
     String endDateString = endDateTime.toIso8601String();
     List<Map<String, dynamic>> maps = await db.query(
       "createdTermine",
-      where: "personId = ? AND (datetime(timeBegin) BETWEEN datetime(?) AND datetime(?))",
-      whereArgs: [personId, startDateString, endDateString],
+      where: "personId = ? AND ((datetime(timeBegin) BETWEEN datetime(?) AND datetime(?)) OR (datetime(timeEnd) BETWEEN datetime(?) AND datetime(?)))",
+      whereArgs: [personId, startDateString, endDateString, startDateString, endDateString],
     );
     return toTerminList(maps);
   }
@@ -265,19 +265,16 @@ class DatabaseHelper {
 
   Future<void> deleteWeekPlan(DateTime startDate, DateTime endDate, int personId) async {
     final db = await database;
+    DateTime realEndDate = endDate.add(Duration(days: 1));
     await db.delete(
         "createdPlans",
         where: "personId = ? AND startDate = ? AND endDate = ?",
         whereArgs: [personId, startDate.toIso8601String(), endDate.toIso8601String()]
     );
     await db.delete(
-        "createdTermine",
-        where: """
-              personId = ?
-              AND datetime(?) >= datetime(timeBegin) 
-              AND datetime(?) <= datetime(timeEnd)
-            """,
-        whereArgs: [personId, startDate.toIso8601String(), endDate.toIso8601String()]
+      "createdTermine",
+      where: "personId = ? AND (datetime(timeBegin) BETWEEN datetime(?) AND datetime(?))",
+      whereArgs: [personId, startDate.toIso8601String(), realEndDate.toIso8601String()],
     );
   }
 

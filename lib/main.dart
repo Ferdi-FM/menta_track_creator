@@ -78,7 +78,7 @@ class MyAppState extends State<MyApp> {
           iconColor: accentColorTwo,
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-            backgroundColor: Colors.transparent,  //Colors.blueGrey.shade700.withAlpha(100),
+            backgroundColor: Colors.blueGrey.shade700.withAlpha(200),  //Colors.blueGrey.shade700.withAlpha(100),
             selectedItemColor: accentColorOne.shade400,
             unselectedItemColor: Colors.white70,
             enableFeedback: true

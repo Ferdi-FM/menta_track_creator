@@ -183,7 +183,6 @@ class MyHomePageState extends State<PlanView>{
   //Konvertiert eine DateTime zu der vom package erwartetem Format (integer). errechnet differenz zwischen der 0ten Stunde am Kalender und dem Termin
   Map<String, int> convertToCalendarFormat(DateTime calendarStart, DateTime terminDate) {
     Duration difference = terminDate.difference(calendarStart);
-
     int days = difference.inDays;
     int hours = difference.inHours % 24;
     int minutes = difference.inMinutes % 60;
@@ -192,26 +191,29 @@ class MyHomePageState extends State<PlanView>{
       "Days": days,
       "Hours": hours,
       "Minutes": minutes,
+      "startsOutSideOfWeek": difference.isNegative ? -1 : 1,
     };
   }
 
   //erzeugt Event im Kalender
+  //Sehr uneleagnt
   void _addObject(String title, DateTime startTime, DateTime endTime, int numberofOverlaps, int overlapOffset) { //
     Map<String, int> convertedDate = convertToCalendarFormat(_calendarStart, startTime);
     List<int> dayList = [convertedDate["Days"]!];
     List<int> hourList = [convertedDate["Hours"]!];
     List<int> minuteList = [convertedDate["Minutes"]!];
     List<int> durationList = [endTime.difference(startTime).inMinutes];
-    
     if(startTime.day != endTime.day){
       dayList.clear(); hourList.clear(); minuteList.clear(); durationList.clear();
-      
       DateTime midNightNewDay = DateTime(endTime.year,endTime.month,endTime.day);
-      Map<String, int> convertedSecondDate = convertToCalendarFormat(_calendarStart, midNightNewDay);
+      ///Erster Teil des Termins
       durationList.add(midNightNewDay.difference(startTime).inMinutes);
-      dayList.add(convertedDate["Days"]!);
-      hourList.add(convertedDate["Hours"]!);
-      minuteList.add(convertedDate["Minutes"]!);
+      //Es wird gecheckt, ob der Termin außerhalb der Range startet
+      convertedDate["startsOutSideOfWeek"] == 1 ? dayList.add(convertedDate["Days"]!): dayList.add(0);
+      convertedDate["startsOutSideOfWeek"] == 1 ? hourList.add(convertedDate["Hours"]!): hourList.add(0);
+      convertedDate["startsOutSideOfWeek"] == 1 ? minuteList.add(convertedDate["Minutes"]!): minuteList.add(0);
+      ///Zweiter Teil des Termins
+      Map<String, int> convertedSecondDate = convertToCalendarFormat(_calendarStart, midNightNewDay);
       durationList.add(endTime.difference(midNightNewDay).inMinutes);
       dayList.add(convertedSecondDate["Days"]!);
       hourList.add(convertedSecondDate["Hours"]!);
