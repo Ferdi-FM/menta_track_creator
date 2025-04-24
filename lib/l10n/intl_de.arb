@@ -33,6 +33,14 @@
   "plans_overlap": "Die Pläne überschneiden sich",
   "no_plans_yet": "Noch keine Wochenpläne",
   "choose_date": "Datum wählen",
+  "weekly_plans": "Wochenpläne",
+  "sort_by": "Sortieren nach",
+  "newest": "Neueste",
+  "oldest": "Älteste",
+  "confirm_delete": "Löschen bestätigen",
+  "delete_entry": "Möchtest du folgenden Eintrag wirklich löschen?",
+  "entry_toDelete": "\n{date1} bis {date2}",
+  "entry_deleted": "Wochenplan wurde gelöscht",
 
   "week_view_wrong": "Ein falsch gespeicherter Termin wurde gelöscht",
 
@@ -59,7 +67,7 @@
   "help_PersonPage_1": "Durch gedrückt halten auf einen Wochenplan kannst du diesen markieren",
   "help_PersonPage_2": "Darauf erscheint unten am Bildschirm ein Balken\nWenn man auf das X drückt, wird alles demarkiert\nDrückst du auf den QR-Code wird ein QR-Code für alle ausgewählten Wochen aufeinmal generiert",
   "help_PersonPage_3": "\nDurch Drücken auf das Kopier-Icon kannst du den Plan in eine neue Woche kopieren",
-  "help_PersonPage_4": "\nDurch Gedrückthalten des Mülleimer-Icons kannst du einen Plan löschen",
+  "help_PersonPage_4": "\nWenn du einen Eintrag nach rechts ziehst kannst du ihn löschen. Du hast dann 3 Sekunden zeit um es rückgängig zu machen",
 
   "help_PlanView_1": "Durch gedrückt halten auf ein Feld kannst du dort einen Termin erstellen",
   "help_PlanView_2": "Durch Drücken auf den Button unten rechtes kannst du allgemein einen Termin erstellen",

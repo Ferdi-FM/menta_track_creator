@@ -34,6 +34,14 @@
   "plans_overlap": "The Plans overlap",
   "no_plans_yet": "No weekly Plans yet",
   "choose_date": "choose Date",
+  "weekly_plans": "Weekly Plans",
+  "sort_by": "Sort by",
+  "newest": "Newest",
+  "oldest": "Oldest",
+  "confirm_delete": "confirm delete",
+  "delete_entry": "Do you really want to delete the following Entry?",
+  "entry_toDelete": "\n{date1} bis {date2}",
+  "entry_deleted": "plan deleted",
 
   "week_view_wrong": "One faulty Task was deleted",
 
@@ -60,7 +68,7 @@
   "help_PersonPage_1": "By holding down on a weekly schedule, you can select it",
   "help_PersonPage_2": "A bar will then appear at the bottom of the screen\nIf you press the X, the selection will be cleared\nIf you press the QR code, a code for all selected weeks will be generated at once",
   "help_PersonPage_3": "\nBy pressing the copy icon, you can copy the schedule to a new week",
-  "help_PersonPage_4": "\nBy holding down the trash icon, you can delete a schedule",
+  "help_PersonPage_4": "\nBy draging a Tile to the right you can delete it. You than have 3 seconds to revert it if you wish",
 
   "help_PlanView_1": "By long-pressing on a field, you can create a task there",
   "help_PlanView_2": "By pressing the button in the bottom right corner, you can create a general task",

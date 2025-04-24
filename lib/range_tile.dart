@@ -6,12 +6,12 @@ import 'package:menta_track_creator/helper_utilities.dart';
 import 'generated/l10n.dart';
 
 class RangeTile extends StatelessWidget {
+  final int index;
   final DateTime start;
   final DateTime end;
   final String user;
   final bool isSelected;
   final Function onItemTap;
-  final VoidCallback deleteItemTap;
   final VoidCallback longPressItem;
   final VoidCallback copyPressed;
 
@@ -21,7 +21,7 @@ class RangeTile extends StatelessWidget {
     required this.end,
     required this.user,
     required this.isSelected,
-    required this.deleteItemTap,
+    required this.index,
     required this.longPressItem,
     required this.copyPressed,
     required this.onItemTap,
@@ -35,18 +35,15 @@ class RangeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 14.0),
-      elevation: 10,
-      child: Container(
+    return Container(
         decoration: BoxDecoration( //rechte seite
-          border: Border(right: BorderSide(color: Theme.of(context).primaryColor, width: 7)),
-          borderRadius: BorderRadius.horizontal(right: Radius.circular(10)),
+          border: Border(right: BorderSide(color: Theme.of(context).primaryColor, width: 10)),
+          //borderRadius: BorderRadius.horizontal(right: Radius.circular(10)),
         ),
         child: Container(
           decoration: BoxDecoration( //linke Seite
-            border: Border(left: BorderSide(color: Theme.of(context).primaryColor,width: 5)),                    //Borderside darf immmer nur einfarbig sein
-            borderRadius: BorderRadius.horizontal(left: Radius.circular(6)),
+            border: Border(left: BorderSide(color: Theme.of(context).primaryColor,width: 10)),                    //Borderside darf immmer nur einfarbig sein
+            //borderRadius: BorderRadius.horizontal(left: Radius.circular(6)),
           ),
           child: GestureDetector(
             onTapUp: (ev) => {
@@ -60,22 +57,22 @@ class RangeTile extends StatelessWidget {
               selectedTileColor: Theme.of(context).primaryColorLight,
               minTileHeight: 72,
               contentPadding: EdgeInsets.symmetric(horizontal: 10),
-              leading: Icon(Icons.calendar_view_week),
+              leading: Icon(Icons.view_week),//Icon(Icons.calendar_view_week),
               title: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                           AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold)),
-                           AutoSizeText("${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold))
+                           AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,),
+                           AutoSizeText("${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,)
                         ],
                       ),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold)),
-                          AutoSizeText("${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))
+                          AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,),
+                          AutoSizeText("${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,)
                         ],
                       )
                     ],
@@ -97,21 +94,20 @@ class RangeTile extends StatelessWidget {
 
                               ),
                         ),
-                        FittedBox(
-                          child: InkWell(
-                              onLongPress: (){
-                                deleteItemTap();
-                              },
-                              child: Padding(padding: EdgeInsets.all(3),
-                                child: Icon(Icons.delete_outline, size: 32,),)),
-                        )
+                        //FittedBox(
+                        //  child: InkWell(
+                        //      onLongPress: (){
+                        //        deleteItemTap();
+                        //      },
+                        //      child: Padding(padding: EdgeInsets.all(3),
+                        //        child: Icon(Icons.delete_outline, size: 32,),)),
+                        //)
                       ],
                     ),)
                 ),
               )
             ),
           ),
-        ),
     );
   }
 }

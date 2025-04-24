@@ -28,6 +28,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     initialPage: 0
   );
   int currentPage = 0;
+  final List<bool> _isSelected = [true, false]; // [Newest, Oldest]
 
   @override
   void initState() {
@@ -37,11 +38,17 @@ class PersonDetailPageState extends State<PersonDetailPage> {
 
   Future<void> loadRanges() async {
     List<Map<String, dynamic>> maps = await DatabaseHelper().getPlans(widget.person.id);
-    for(Map map in maps){
-      _ranges.add(DateTimeRange(start: DateTime.parse(map["startDate"]), end: DateTime.parse(map["endDate"])));
-    }
     setState(() {
-      _ranges;
+      _ranges.clear();
+      for(Map map in maps){
+        _ranges.add(DateTimeRange(start: DateTime.parse(map["startDate"]), end: DateTime.parse(map["endDate"])));
+      }
+
+      _ranges.sort((a,b) {
+        DateTime timeA = a.start;
+        DateTime timeB = b.start;
+        return timeB.compareTo(timeA);
+      });
     });
   }
 
@@ -49,7 +56,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
     DateTimeRange? picked = await showDateRangePicker(
       context: context,
       locale: const Locale("de", "DE"),
-      initialDateRange: _ranges.isNotEmpty ? DateTimeRange(start: _ranges.last.end.add(Duration(days: 1)), end: _ranges.last.end.add(Duration(days: 7))) : DateTimeRange(start: DateTime.now(), end: DateTime.now().add(Duration(days: 6))),
+      initialDateRange: _ranges.isNotEmpty ? DateTimeRange(start: _ranges.first.end.add(Duration(days: 1)), end: _ranges.first.end.add(Duration(days: 7))) : DateTimeRange(start: DateTime.now(), end: DateTime.now().add(Duration(days: 6))),
       firstDate: DateTime(2025),
       lastDate: DateTime(2101),
     );
@@ -72,30 +79,32 @@ class PersonDetailPageState extends State<PersonDetailPage> {
         if(mounted)Utilities().showSnackBar(context, S.current.plans_overlap);
       } else {
         if(index == null){
-          DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.id);
+          await DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.id);
           setState(() {
-            _ranges.add(picked);
+            loadRanges();
           });
         } else {
           List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.id, _ranges[index].start, _ranges[index].end);
-          DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.id);
-          DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
-          for(Termin t in tList){
-            int dif = DateTime(t.startTime.year,t.startTime.month,t.startTime.day).difference(normalStart).inDays;
-            Duration dif2 = picked.start.difference(normalStart);
-            DateTime newTime = normalStart.add(dif2).add(Duration(days: dif));
-            DateTime startTime = newTime.add(Duration(hours: t.startTime.hour, minutes: t.startTime.minute));
-            DateTime endTime = newTime.add(Duration(hours: t.endTime.hour, minutes: t.endTime.minute));
-            if(endTime.isBefore(startTime))endTime = endTime.add(Duration(days: 1));
-            Termin newT = Termin(
+          await DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.id);
+          if(tList.isNotEmpty){
+            DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
+            for(Termin t in tList){
+              int dif = DateTime(t.startTime.year,t.startTime.month,t.startTime.day).difference(normalStart).inDays;
+              Duration dif2 = picked.start.difference(normalStart);
+              DateTime newTime = normalStart.add(dif2).add(Duration(days: dif));
+              DateTime startTime = newTime.add(Duration(hours: t.startTime.hour, minutes: t.startTime.minute));
+              DateTime endTime = newTime.add(Duration(hours: t.endTime.hour, minutes: t.endTime.minute));
+              if(endTime.isBefore(startTime))endTime = endTime.add(Duration(days: 1));
+              Termin newT = Termin(
                 name: t.name,
                 startTime: startTime,
                 endTime: endTime,
-            );
-            DatabaseHelper().insertTermin(newT, widget.person.id);
+              );
+              await DatabaseHelper().insertTermin(newT, widget.person.id);
+            }
           }
           setState(() {
-            _ranges.add(picked);
+            _ranges.insert(0,picked);
           });
 
         }
@@ -128,7 +137,8 @@ class PersonDetailPageState extends State<PersonDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [Scaffold(
+    return Stack(children: [
+      Scaffold(
       appBar: AppBar(
           title: Text(widget.person.name),
           leading: IconButton(
@@ -149,6 +159,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
       body: Stack(
         children: [
           PageView(
+            hitTestBehavior: HitTestBehavior.opaque,
             onPageChanged: (ev){
               setState(() {
                 currentPage = ev;
@@ -165,10 +176,41 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                   Align(
                     alignment: Alignment.center,
                     child: Text(
-                        "Wochenpläne",
+                        S.current.weekly_plans,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Theme.of(context).appBarTheme.backgroundColor, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)
                     ),
+                  ),
+                  SizedBox(height: 20),
+                  Text(S.current.sort_by, textAlign: TextAlign.center),
+                  ToggleButtons(
+                    isSelected: _isSelected,
+                    onPressed: (index) {
+                      setState(() {
+                        for (int i = 0; i < _isSelected.length; i++) {
+                          _isSelected[i] = i == index;
+                        }
+                        if (index == 0) {
+                          _ranges.sort((a, b) => b.start.compareTo(a.start)); // Newest first
+                        } else {
+                          _ranges.sort((a, b) => a.start.compareTo(b.start)); // Oldest first
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    constraints: BoxConstraints(minHeight: 42.0, minWidth: MediaQuery.of(context).size.width*0.4),
+                    borderColor: Theme.of(context).appBarTheme.backgroundColor,
+                    fillColor: Theme.of(context).appBarTheme.backgroundColor,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(S.current.newest),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(S.current.oldest),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 20),
                   if(_ranges.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.no_plans_yet, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
@@ -188,54 +230,122 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                         ).createShader(bounds);
                       },
                       blendMode: BlendMode.dstIn,
-                      child:ListView.separated(
+                      child: ListView.builder(
                         itemCount: _ranges.length,
                         itemBuilder: (context, index) {
                           final range = _ranges[index];
                           return Padding(
-                            padding: EdgeInsets.only(top: index == 0 ? 20 : 0),
-                            child: RangeTile(
-                              isSelected: _selectedRanges.contains(range),
-                              onItemTap: (ev)  {
-                                if(_selectedRanges.isNotEmpty){
-                                  setState(() {
-                                    if(!_selectedRanges.contains(range)){
-                                      _selectedRanges.add(range);
-                                    } else {
-                                      _selectedRanges.remove(range);
-                                    }
-                                  });
-                                } else {
-                                  openCalendar(range.start, range.end);}
-                              },
-                              deleteItemTap: (){
-                                setState(() {
-                                  _ranges.removeAt(index);
-                                  DatabaseHelper().deleteWeekPlan(range.start, range.end, widget.person.id);
-                                });
-                              },
-                              copyPressed: () => _showDateRangePicker(index),
-                              start: range.start,
-                              end: range.end,
-                              user: widget.person.name,
-                              longPressItem: () async {
-                                setState(() {
-                                  if(_selectedRanges.contains(range)){
-                                    _selectedRanges.remove(range);
-                                  } else {
-                                    _selectedRanges.add(range);
-                                  }
-                                });
-                                //List<Termin> l = await DatabaseHelper().getWeekPlan(user, start, end);
-                                //CreateQRCode().showQrCode(context, l);
-                              },
+                            key: Key("$range"),
+                            padding: EdgeInsets.only(top: index == 0 ? 15 : 5, bottom: 5, left: 13, right: 13),
+                            child: Material(
+                              elevation: 10,
+                              borderRadius: BorderRadius.circular(12),
+                              child: ClipRRect(
+                                key: Key("$range"),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Dismissible(
+                                  key: Key("$range"),
+                                  direction: DismissDirection.startToEnd,
+                                  confirmDismiss: (ev) async {
+                                    return await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: FittedBox(child: Text(S.current.confirm_delete)),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(S.current.delete_entry, textAlign: TextAlign.center,),
+                                              Text(S.current.entry_toDelete(DateFormat("dd.MM").format(range.start), DateFormat("dd.MM").format(range.end)), style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                              child: Text(S.current.cancel),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                              child: Text(S.current.delete, style: TextStyle(color: Colors.red)),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ) ?? false;
+                                  },
+                                  onDismissed: (direction) async {
+                                    setState(() {
+                                      _ranges.removeAt(index);
+                                      DatabaseHelper().deleteWeekPlan(range.start, range.end, widget.person.id);
+                                    });
+                                    ScaffoldMessenger.of(context).clearSnackBars();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(S.current.entry_deleted),
+                                        action: SnackBarAction(
+                                          label: S.current.comment_undo,
+                                          onPressed: () {
+                                            setState(() {
+                                              DatabaseHelper().insertPlan(range.start, range.end, widget.person.id);
+                                              loadRanges();
+                                            });
+                                          },
+                                        ),
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                  },
+                                  background: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.red,
+                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    padding: EdgeInsets.symmetric(horizontal: 10),
+                                    child: Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  child: RangeTile(
+                                        index: index,
+                                        isSelected: _selectedRanges.contains(range),
+                                        onItemTap: (ev)  {
+                                          if(_selectedRanges.isNotEmpty){
+                                            setState(() {
+                                              if(!_selectedRanges.contains(range)){
+                                                _selectedRanges.add(range);
+                                              } else {
+                                                _selectedRanges.remove(range);
+                                              }
+                                            });
+                                          } else {
+                                            openCalendar(range.start, range.end);}
+                                        },
+                                        copyPressed: () => _showDateRangePicker(index),
+                                        start: range.start,
+                                        end: range.end,
+                                        user: widget.person.name,
+                                        longPressItem: () async {
+                                          setState(() {
+                                            if(_selectedRanges.contains(range)){
+                                              _selectedRanges.remove(range);
+                                            } else {
+                                              _selectedRanges.add(range);
+                                            }
+                                          });
+                                          //List<Termin> l = await DatabaseHelper().getWeekPlan(user, start, end);
+                                          //CreateQRCode().showQrCode(context, l);
+                                        }
+                                  ),
+                                ),
+                                )
                             ),
                           );
-                        }, separatorBuilder: (BuildContext context, int index) { return SizedBox(height: 15,); },
+                        }
                       ),
                     ),
                   ),
-
                 ],
               ),
               CommentPage(person: widget.person)
@@ -269,12 +379,12 @@ class PersonDetailPageState extends State<PersonDetailPage> {
             BottomNavigationBarItem(
               icon: currentPage == 0 ? Icon(Icons.calendar_view_week) : Icon(Icons.calendar_view_week_outlined),
               backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-              label:  "Wochenpläne",
+              label:  S.current.weekly_plans,
             ),
             BottomNavigationBarItem(
               icon: currentPage == 1 ? Icon(Icons.comment) : Icon(Icons.comment_outlined),
               backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-              label:  "Kommentare",
+              label:  S.current.comments_note(2),
             ),
           ],
         ),
@@ -294,11 +404,12 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
                 color: Theme.of(context).listTileTheme.tileColor
             ),
-            height: MediaQuery.of(context).size.height*0.08,
+            height: MediaQuery.of(context).size.height*0.12,
             child: Padding(
                 padding: EdgeInsets.all(10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     FittedBox(
                       fit: BoxFit.contain,
@@ -309,15 +420,21 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                             });
                           },
                           child: Icon(Icons.close, size: 30,)),),
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          for(DateTimeRange ran in _selectedRanges)...{
-                            Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
-                          }
-                        ],
-                      ),
-                    ),
+                    /*Scrollbar(
+                      thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              for(DateTimeRange ran in _selectedRanges)...{
+                                DefaultTextStyle(
+                                  style: TextStyle(decoration: TextDecoration.none),
+                                  child: Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                                )
+
+                              }
+                            ],
+                          ),
+                        )),*/
                     FittedBox(
                         fit: BoxFit.contain,
                         child: TextButton(

@@ -47,9 +47,11 @@ class CommentPageState extends State<CommentPage> {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(existingTitle != null
-              ? S.current.comments_updateNote
-              : S.current.comments_addNote),
+          title: FittedBox(
+            child: Text(existingTitle != null
+                ? S.current.comments_updateNote
+                : S.current.comments_addNote)
+          ) ,
           content: SingleChildScrollView(
             child: Column(
               children: <Widget>[
@@ -61,7 +63,7 @@ class CommentPageState extends State<CommentPage> {
                 SizedBox(height: 10),
                 TextField(
                   controller: commentController,
-                  maxLines: 6,
+                  maxLines: 3,
                   scrollPadding: EdgeInsets.only(
                       bottom:
                           MediaQuery.of(context).viewInsets.bottom + 18 * 5),
@@ -76,35 +78,42 @@ class CommentPageState extends State<CommentPage> {
             ),
           ),
           actions: <Widget>[
-            TextButton(
-              child: Text(S.current.cancel),
-              onPressed: () {
-                navigatorKey.currentState?.pop();
-              },
-            ),
-            TextButton(
-              child: Text(
-                  existingTitle != null ? S.current.update : S.current.add),
-              onPressed: () async {
-                if (titleController.text.isNotEmpty &&
-                    commentController.text.isNotEmpty) {
-                  existingTitle != null && existingComment != null
-                      ? await DatabaseHelper().updateComment(
-                          widget.person.id,
-                          existingTitle,
-                          existingComment,
-                          titleController.text,
-                          commentController.text)
-                      : await DatabaseHelper().insertComment(
-                          widget.person.id,
-                          titleController.text,
-                          commentController.text,
-                          commentList.length);
-                  setUpPage();
-                  navigatorKey.currentState?.pop();
-                }
-              },
-            ),
+            FittedBox(
+              child: Row(
+                children: [
+                  TextButton(
+                    child: Text(S.current.cancel),
+                    onPressed: () {
+                      navigatorKey.currentState?.pop();
+                    },
+                  ),
+                  TextButton(
+                    child: Text(
+                        existingTitle != null ? S.current.update : S.current.add),
+                    onPressed: () async {
+                      if (titleController.text.isNotEmpty &&
+                          commentController.text.isNotEmpty) {
+                        existingTitle != null && existingComment != null
+                            ? await DatabaseHelper().updateComment(
+                            widget.person.id,
+                            existingTitle,
+                            existingComment,
+                            titleController.text,
+                            commentController.text)
+                            : await DatabaseHelper().insertComment(
+                            widget.person.id,
+                            titleController.text,
+                            commentController.text,
+                            commentList.length);
+                        setUpPage();
+                        navigatorKey.currentState?.pop();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            )
+
           ],
         );
       },
