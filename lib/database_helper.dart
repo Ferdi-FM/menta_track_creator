@@ -16,12 +16,14 @@ class DatabaseHelper {
   Future<Database> initDatabase() async {
     String path = await getDatabasesPath();
     return openDatabase(
-      join(path, "person_plans_v1.db"),
+      join(path, "person_plans_v3.db"),
       onCreate: (db, version) async {
         await db.execute('''
          CREATE TABLE Persons(
            id INTEGER PRIMARY KEY,
-           name TEXT
+           name TEXT,
+           imagePath TEXT,
+           sortIndex INTEGER
          )
        ''');
 
@@ -198,16 +200,52 @@ class DatabaseHelper {
     return await db.query("createdTermine");
   }
 
-  Future<int> insertPerson(String name, String lastName) async {
+  Future<int> insertPerson(String name, String imagePath, int sortIndex) async {
     final db = await database;
 
     //Erstellt die Tabelle mit dem ersten Tag der Woche in der Tabelle WeeklyPlans.
     return await db.insert(
       "Persons",
-      {"name": "$name $lastName"},
+      {
+        "name": name,
+        "imagePath": imagePath,
+        "sortIndex": sortIndex
+      },
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
 
+  }
+
+  Future<int> updatePerson(int personId, String newName, String imagePath) async {
+    final db = await database;
+
+    return await db.update(
+      "Persons",
+      {
+        "name": newName,
+        "imagePath": imagePath,
+      },
+      where: "id = ?",
+      whereArgs: [personId]
+    );
+  }
+
+  Future<void> updatePersonList(List<Person> updatedPersonList) async {
+    final db = await database;
+    final batch = db.batch();
+
+    for (int i = 0; i < updatedPersonList.length; i++){
+      Person p = updatedPersonList[i];
+      batch.update(
+          "Persons",
+          {
+            "sortIndex": i
+          },
+          where: "id = ?",
+          whereArgs: [p.id]
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   Future<List<Person>> getPersons(String search) async {
@@ -224,7 +262,7 @@ class DatabaseHelper {
     }
     List<Person> personList = [];
     for(Map map in maps){
-      Person p = Person(name: map["name"], id: map["id"]);
+      Person p = Person(name: map["name"], id: map["id"], imagePath: map["imagePath"], sortIndex: map["sortIndex"]);
       personList.add(p);
     }
     return personList;
@@ -291,8 +329,13 @@ class DatabaseHelper {
         whereArgs: [personId]
     );
     await db.delete(
-        "Persons",
+        "comments",
         where: "personId = ?",
+        whereArgs: [personId]
+    );
+    await db.delete(
+        "Persons",
+        where: "id = ?",
         whereArgs: [personId]
     );
   }

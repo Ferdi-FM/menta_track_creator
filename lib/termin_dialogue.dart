@@ -69,6 +69,9 @@ class TerminDialog {
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(labelText: "Termin Name"),
+                    onTapOutside: (ev){
+                      FocusScope.of(context).unfocus();
+                    },
                   ),
                   SizedBox(height: 10),
                   ListTile(

@@ -87,18 +87,16 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           List<Termin> tList = await DatabaseHelper().getWeekPlan(widget.person.id, _ranges[index].start, _ranges[index].end);
           await DatabaseHelper().insertPlan(picked.start, picked.end, widget.person.id);
           if(tList.isNotEmpty){
-            DateTime normalStart = DateTime(tList.first.startTime.year,tList.first.startTime.month,tList.first.startTime.day);
             for(Termin t in tList){
-              int dif = DateTime(t.startTime.year,t.startTime.month,t.startTime.day).difference(normalStart).inDays;
-              Duration dif2 = picked.start.difference(normalStart);
-              DateTime newTime = normalStart.add(dif2).add(Duration(days: dif));
-              DateTime startTime = newTime.add(Duration(hours: t.startTime.hour, minutes: t.startTime.minute));
-              DateTime endTime = newTime.add(Duration(hours: t.endTime.hour, minutes: t.endTime.minute));
-              if(endTime.isBefore(startTime))endTime = endTime.add(Duration(days: 1));
+              Duration originalDifference = t.startTime.difference(_ranges[index].start);
+              DateTime newStart = picked.start.add(originalDifference);
+              DateTime newEnd = newStart.add(t.endTime.difference(t.startTime));
+
+              if(newStart.isAfter(picked.end.add(Duration(days: 1)))) continue; //Wenn der Termin außerhalb der neuen Range liegt/ +1day da .end um 0:00 ist
               Termin newT = Termin(
                 name: t.name,
-                startTime: startTime,
-                endTime: endTime,
+                startTime: newStart,
+                endTime: newEnd,
               );
               await DatabaseHelper().insertTermin(newT, widget.person.id);
             }
@@ -106,33 +104,9 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           setState(() {
             _ranges.insert(0,picked);
           });
-
         }
-
       }
     }
-  }
-
-  List<Termin> copyTermineToNewWeek({
-    required List<Termin> termine,
-    required DateTime fromWeekStart,
-    required DateTime toWeekStart,
-  }) {
-    return termine.map((t) {
-      int daysOffset = DateTime(t.startTime.year, t.startTime.month, t.startTime.day)
-          .difference(fromWeekStart)
-          .inDays;
-      DateTime newBase = toWeekStart.add(Duration(days: daysOffset));
-      return Termin(
-        name: t.name,
-        startTime: DateTime(
-            newBase.year, newBase.month, newBase.day,
-            t.startTime.hour, t.startTime.minute),
-        endTime: DateTime(
-            newBase.year, newBase.month, newBase.day,
-            t.endTime.hour, t.endTime.minute),
-      );
-    }).toList();
   }
 
   @override
@@ -156,7 +130,16 @@ class PersonDetailPageState extends State<PersonDetailPage> {
               Utilities().getHelpBurgerMenu(context, currentPage == 0 ? "PersonPage" : "NotePage")
           ],
       ),
-      body: Stack(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors:[Theme.of(context).scaffoldBackgroundColor, Theme.of(context).primaryColorLight],
+            stops: [0.5,1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomLeft,
+          ),
+        ),
+        child: Stack(
         children: [
           PageView(
             hitTestBehavior: HitTestBehavior.opaque,
@@ -213,7 +196,12 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                     ],
                   ),
                   SizedBox(height: 20),
-                  if(_ranges.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.no_plans_yet, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
+                  if(_ranges.isEmpty) Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(S.current.no_plans_yet, style: TextStyle(fontSize: 24), textAlign: TextAlign.center,),
+                    ),
+                  ),
                   Expanded(
                     child: ShaderMask(
                       shaderCallback: (Rect bounds) {
@@ -247,36 +235,11 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                                   key: Key("$range"),
                                   direction: DismissDirection.startToEnd,
                                   confirmDismiss: (ev) async {
-                                    return await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) {
-                                        return AlertDialog(
-                                          title: FittedBox(child: Text(S.current.confirm_delete)),
-                                          content: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(S.current.delete_entry, textAlign: TextAlign.center,),
-                                              Text(S.current.entry_toDelete(DateFormat("dd.MM").format(range.start), DateFormat("dd.MM").format(range.end)), style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)
-                                            ],
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.of(context).pop(false),
-                                              child: Text(S.current.cancel),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                              child: Text(S.current.delete, style: TextStyle(color: Colors.red)),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ) ?? false;
+                                    return await Utilities().showDeleteConfirmation(context, S.current.entry_toDelete(DateFormat("dd.MM").format(range.start), DateFormat("dd.MM").format(range.end)));
                                   },
                                   onDismissed: (direction) async {
                                     setState(() {
                                       _ranges.removeAt(index);
-                                      DatabaseHelper().deleteWeekPlan(range.start, range.end, widget.person.id);
                                     });
                                     ScaffoldMessenger.of(context).clearSnackBars();
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -286,14 +249,18 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                                           label: S.current.comment_undo,
                                           onPressed: () {
                                             setState(() {
-                                              DatabaseHelper().insertPlan(range.start, range.end, widget.person.id);
-                                              loadRanges();
+                                              _ranges.insert(index, range);
                                             });
                                           },
                                         ),
                                         duration: Duration(seconds: 3),
                                       ),
                                     );
+                                    await Future.delayed(Duration(seconds: 3), (){
+                                      if(!_ranges.contains(range)){
+                                        DatabaseHelper().deleteWeekPlan(range.start, range.end, widget.person.id);
+                                      }
+                                    });
                                   },
                                   background: Container(
                                     decoration: BoxDecoration(
@@ -334,8 +301,6 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                                               _selectedRanges.add(range);
                                             }
                                           });
-                                          //List<Termin> l = await DatabaseHelper().getWeekPlan(user, start, end);
-                                          //CreateQRCode().showQrCode(context, l);
                                         }
                                   ),
                                 ),
@@ -353,6 +318,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
           )
           ,
         ],
+      )
       ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(top:0),
@@ -420,21 +386,6 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                             });
                           },
                           child: Icon(Icons.close, size: 30,)),),
-                    /*Scrollbar(
-                      thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              for(DateTimeRange ran in _selectedRanges)...{
-                                DefaultTextStyle(
-                                  style: TextStyle(decoration: TextDecoration.none),
-                                  child: Text("${DateFormat("dd.MM").format(ran.start)} - ${DateFormat("dd.MM").format(ran.end)}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                                )
-
-                              }
-                            ],
-                          ),
-                        )),*/
                     FittedBox(
                         fit: BoxFit.contain,
                         child: TextButton(

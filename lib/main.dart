@@ -21,9 +21,10 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   ThemeMode themeMode = ThemeMode.dark;//Darkmode als standard
-  MaterialColor accentColorOne = Colors.lightBlue;
-  Color accentColorTwo = Colors.lightBlue;
-  MaterialColor seedColor = Colors.cyan;
+  bool isDarkMode = true;
+  MaterialColor accentColorOne = Colors.teal;
+  Color accentColorTwo = Colors.teal;
+  MaterialColor seedColor = Colors.teal;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +71,7 @@ class MyAppState extends State<MyApp> {
           brightness: Brightness.dark,
         ),
         primaryColor: accentColorTwo,
+        primaryColorLight: Colors.blueGrey.shade600,
         appBarTheme: AppBarTheme(color: accentColorOne.shade400, foregroundColor: Colors.black87, iconTheme: IconThemeData(color: Colors.black87)),
         scaffoldBackgroundColor: Colors.blueGrey.shade800,
         listTileTheme: ListTileThemeData(
@@ -98,6 +100,7 @@ class MyAppState extends State<MyApp> {
   void changeTheme(ThemeMode themeMode) {
     setState(() {
       this.themeMode = themeMode;
+      isDarkMode = this.themeMode == ThemeMode.dark ? true : false;
     });
   }
 }

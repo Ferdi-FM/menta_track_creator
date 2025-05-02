@@ -19,6 +19,12 @@
   "main_noPerson": "Noch keine Personen gespeichert",
   "main_newPerson": "Neue Person",
 
+  "main_addImage": "Bild hinzufügen",
+  "main_imageInfo": "Wenn du Lust hast kannst du ein Bild für den Eintrag aufnehmen",
+  "planView_nothingPlaned": "Keine Aktivität geplant!",
+  "planView_viewWeek": "Woche",
+  "planView_viewList": "Liste",
+
   "qr_code": "QR Code",
   "generate_qrCode": "QR-Code generieren",
 
@@ -27,7 +33,7 @@
   "Mi": "Mittwoch",
   "Do": "Donnerstag",
   "Fr": "Freitag",
-  "Sa": "Samastag",
+  "Sa": "Samstag",
   "So": "Sonntag",
 
   "plans_overlap": "Die Pläne überschneiden sich",
@@ -64,6 +70,10 @@
   "tooltip_variation": "Variation",
   "tooltip_variation_text": "Fügt jedem Termin die ausgewählte Dauer  hinzu",
 
+  "help_mainPage_1": "Mit dem Button unten Rechts kannst du eine neue Person hinzufügen.\nDu kannst Vor/Nach-Namen festlegen (oder Spitznamen/Abkürzungen), sowie optional ein Bild aufnehmen\n",
+  "help_mainPage_2": "Durch Drücken auf einen Eintrag kannst du die Seite der Person öffnen, hier kannst du dann Wochenpläne erstellen und Notizen schreiben\n",
+  "help_mainPage_3": "Druch Drücken auf den Stift kannst du eine Person bearbeiten (Name oder Bild ändern).\nDruch Wischen eines Eintrags nach rechts kannst du diesen Löschen, dabei erscheint aber zuerst noch eine Konfirmation ob du sicher bist!\n",
+
   "help_PersonPage_1": "Durch gedrückt halten auf einen Wochenplan kannst du diesen markieren",
   "help_PersonPage_2": "Darauf erscheint unten am Bildschirm ein Balken\nWenn man auf das X drückt, wird alles demarkiert\nDrückst du auf den QR-Code wird ein QR-Code für alle ausgewählten Wochen aufeinmal generiert",
   "help_PersonPage_3": "\nDurch Drücken auf das Kopier-Icon kannst du den Plan in eine neue Woche kopieren",
@@ -72,5 +82,10 @@
   "help_PlanView_1": "Durch gedrückt halten auf ein Feld kannst du dort einen Termin erstellen",
   "help_PlanView_2": "Durch Drücken auf den Button unten rechtes kannst du allgemein einen Termin erstellen",
   "help_PlanView_3": "Durch Drücken auf einen Termin kannst du diesen bearbeiten\n\nDu kannst auch Zoomen, dabei ist empfohlen einen Finger auf der linken Zeitleiste zu haben um zuverlässig zu funktionieren",
-  "help_PlanView_4": "\nIm DropDown-Menü oben rechts findest du eine Option einen QR-Code für diese Periode zu erstellen"
+  "help_PlanView_4": "\nIm DropDown-Menü oben rechts findest du eine Option einen QR-Code für diese Periode zu erstellen",
+
+  "help_noteView_1": "Mit dem Griff links oben in einer Notiz kannst du diese per Drag&Drop anordnen",
+  "help_noteView_2": "\nWenn du eine Notiz nach links ziehst kannst du sie löschen. Du hast dann 3 Sekunden zeit um es rückgängig zu machen",
+  "help_noteView_3": "\nWenn eine Notiz sehr lang ist kannst du sie durch ein Tippen erweitern und dann Scrollen"
+
 }

@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/person.dart';
-import 'package:menta_track_creator/person_page.dart';
+import 'package:menta_track_creator/person_tile.dart';
+import 'package:menta_track_creator/photo_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'generated/l10n.dart';
+import 'helper_utilities.dart';
 import 'main.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -41,6 +46,7 @@ class MyHomePageState extends State<MyHomePage> {
     _persons = await DatabaseHelper().getPersons("");
     setState(() {
       _persons;
+      _persons.sort((a,b) => a.sortIndex.compareTo(b.sortIndex));
     });
   }
 
@@ -48,55 +54,114 @@ class MyHomePageState extends State<MyHomePage> {
     _persons = await DatabaseHelper().getPersons(s);
     setState(() {
       _persons;
+      _persons.sort((a,b) => a.sortIndex.compareTo(b.sortIndex));
     });
   }
 
-  Future<void> _addPerson(String firstName, String lastName) async {
-    final id = await DatabaseHelper().insertPerson(firstName, lastName);
+  Future<void> _addPerson(String name, String imagePath) async {
+    final id = await DatabaseHelper().insertPerson(name, imagePath, _persons.length);
     setState(() {
-      _persons.add(Person(id: id,name: "$firstName $lastName"));
+      _persons.add(Person(id: id, name: name, imagePath: imagePath, sortIndex: _persons.length));
     });
   }
 
-  Future<void> _showAddPersonDialog() async {
+  Future<bool?> _showAddPersonDialog([Person? person]) async {
     final TextEditingController firstNameController = TextEditingController();
     final TextEditingController lastNameController = TextEditingController();
+    XFile? image;
+    String imagePath = "";
+    if(person != null){
+      firstNameController.text = person.name.split(" ").first;
+      lastNameController.text = person.name.split(" ").last;
+    }
 
-    return showDialog<void>(
+    return showDialog<bool>(
       context: context,
-      barrierDismissible: false, // user must tap button!
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(S.current.main_newPerson),
-          content: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                TextField(
-                  controller: firstNameController,
-                  decoration: InputDecoration(labelText: S.current.main_firstname),
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setState) {
+            return AlertDialog(
+              title: Text(S.current.main_newPerson),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    TextField(
+                      controller: firstNameController,
+                      decoration: InputDecoration(labelText: S.current.main_firstname),
+                      onTapOutside: (ev) => FocusScope.of(context).unfocus(),
+                    ),
+                    TextField(
+                      controller: lastNameController,
+                      decoration: InputDecoration(labelText: S.current.main_surname),
+                      onTapOutside: (ev) => FocusScope.of(context).unfocus(),
+                    ),
+                    SizedBox(height: 20,),
+                    Row(
+                      children: [
+                        Text(S.current.main_addImage),
+                        Spacer(),
+                        IconButton(
+                          onPressed: () async {
+                            Map<String, dynamic> photo = await  PhotoHelper().takePhotoAndSave();
+                            if(photo.isNotEmpty){
+                              setState(() {
+                                image = photo["photo"];
+                                imagePath = photo["imagePath"];
+                              });
+                            }
+                          },
+                          icon: Icon(Icons.camera),
+                        )
+                      ],
+                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height*0.3
+                        ),
+                        child: person != null && person.imagePath!.isNotEmpty && image == null
+                            ? Image.file(File(person.imagePath!))
+                            :  Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.fromBorderSide(
+                              BorderSide(
+                                width: 2,
+                                color: Colors.black87
+                              )
+                            )
+                          ),
+                          child: image == null
+                              ? Padding(padding: EdgeInsets.all(5),child: Text(S.current.main_imageInfo, textAlign: TextAlign.center,),)
+                              : Image.file(File(image!.path)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  controller: lastNameController,
-                  decoration: InputDecoration(labelText: S.current.main_surname),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(S.current.cancel),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: person == null ? Text(S.current.add) : Text(S.current.update),
+                  onPressed: () {
+                    String name = "${firstNameController.text} ${lastNameController.text}";
+                    person == null
+                        ? _addPerson(name, imagePath)
+                        : DatabaseHelper().updatePerson(person.id, name, imagePath);
+                    Navigator.of(context).pop(true);
+                  },
                 ),
               ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(S.current.cancel),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(S.current.add),
-              onPressed: () {
-                _addPerson(firstNameController.text, lastNameController.text);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -108,143 +173,119 @@ class MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(S.current.main_persons),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 5),
-            child: MenuAnchor(
-                menuChildren: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 10,),
-                      Icon(Icons.dark_mode),
-                      SizedBox(width: 10),
-                      Switch(
-                          value: _themeModeBool,
-                          onChanged: (ev) async {
-                            _themeModeBool = ev;
-                            MyApp.of(context).changeTheme(ev ? ThemeMode.dark : ThemeMode.light);
-                            SharedPreferences pref = await SharedPreferences.getInstance();
-                            pref.setBool("darkMode", ev);
-                          })
-                    ],
-                  ),
-                ],
-                builder: (BuildContext context, MenuController controller, Widget? child) {
-                  return TextButton(
-                    focusNode: FocusNode(),
-                    onPressed: () {
-                      if (controller.isOpen) {
-                        controller.close();
-                      } else {
-                        controller.open();
-                      }
-                    },
-                    child: Icon(Icons.menu, size: 30, color: Theme.of(context).appBarTheme.foregroundColor,),
-                  );
-                }
-            ),
-          ),
+          Utilities().getHelpBurgerMenu(context, "mainPage")
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.all(15),
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: S.current.main_search,
-                border: OutlineInputBorder(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors:[Theme.of(context).scaffoldBackgroundColor, Theme.of(context).primaryColorLight],
+            stops: [0.5,1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(15),
+          child: Column(
+            children: [
+              SizedBox(height: 10,),
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: S.current.main_search,
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (ev){
+                  searchPersons(ev);
+                },
+                onTapOutside: (ev){
+                  FocusScope.of(context).unfocus();
+                },
               ),
-              onChanged: (ev){
-                searchPersons(ev);
-              },
-              onTapOutside: (ev){
-                FocusScope.of(context).unfocus();
-              },
-            ),
-            SizedBox(height: 20,),
-            if(_persons.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.main_noPerson, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
-            Expanded(
-                child: ShaderMask(
-                  shaderCallback: (Rect bounds) {
-                    return LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black,
-                        Colors.black,
-                        Colors.transparent
-                      ],
-                      stops: [0.0, 0.04, 0.95, 1.0],
-                    ).createShader(bounds);
-                  },
-                  blendMode: BlendMode.dstIn,
-                  child: ListView.builder(
-                    itemCount: _persons.length,
-                    itemBuilder: (context, index) {
-                      final person = _persons[index];
-                      return Padding(
-                        padding: EdgeInsets.only(top: index == 0 ? 15 : 0),
-                        child: Card(
-                            color: Colors.white38,
-                            elevation: 10,
-                            margin: EdgeInsets.symmetric(vertical: 4,horizontal: 3),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child:
-                            GestureDetector(
-                              onTapDown: (ev){
-                                var pos = ev.globalPosition;
-                                navigatorKey.currentState?.push(
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          PersonDetailPage(person: person),
-                                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                        const curve = Curves.easeInOut;
-
-                                        // Erstelle eine Skalierungs-Animation
-                                        var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
-                                        var scaleAnimation = animation.drive(tween);
-
-                                        return ScaleTransition(
-                                          scale: scaleAnimation,
-                                          alignment: Alignment(0, pos.dy / MediaQuery.of(context).size.height * 2 - 1),
-                                          child: child,
-                                        );
-                                      },
-                                    )
-                                );
-                              },
-                              child: ListTile(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(7)
-                                ),
-                                leading: Icon(Icons.person),
-                                title: Text(person.name),
-                                trailing: IconButton(
-                                    onPressed: (){
-                                      setState(() {
-                                        _persons.removeAt(index);
-                                        DatabaseHelper().deletePerson(person.id);
-                                      });
-                                    },
-                                    icon: Icon(Icons.delete)),
-                              ),
-                            )
-                        ),
-                      )
-
-                      ;
+              SizedBox(height: 20,),
+              if(_persons.isEmpty) Padding(padding: EdgeInsets.symmetric(vertical: 100), child: Text(S.current.main_noPerson, textAlign: TextAlign.center, style: TextStyle(fontSize: 28))),
+              Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black,
+                          Colors.black,
+                          Colors.transparent
+                        ],
+                        stops: [0.0, 0.04, 0.95, 1.0],
+                      ).createShader(bounds);
                     },
-                  ),
-                )
-            )
-          ],
-        ),)
-      ,
+                    blendMode: BlendMode.dstIn,
+                    child: ReorderableListView.builder(
+                        itemCount: _persons.length,
+                        itemBuilder: (context, index) {
+                          final person = _persons[index];
+                          return PersonTile(
+                            key: Key(person.id.toString()),
+                              person: person,
+                              index: index,
+                              deleteEntry: () async {
+                                setState(() {
+                                  _persons.removeAt(index);
+                                });
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(S.current.entry_deleted),
+                                    action: SnackBarAction(
+                                      label: S.current.comment_undo,
+                                      onPressed: () {
+                                        setState(() {
+                                          _persons.insert(index, person);
+                                        });
+                                      },
+                                    ),
+                                    duration: Duration(seconds: 3),
+                                  ),
+                                );
+                                await Future.delayed(Duration(seconds: 3), (){
+                                  if(!_persons.contains(person)){
+                                    DatabaseHelper().deletePerson(person.id);
+                                    DatabaseHelper().updatePersonList(_persons);
+                                  }
+                                });
+                              },
+                              editEntry: () async {
+                                bool? result = await _showAddPersonDialog(person);
+                                if(result != null){
+                                  loadList();
+                                }
+                              });
+                        },
+                        proxyDecorator: (child, index, animation) {
+                          return Material(
+                            elevation: 15,
+                            color: Colors.transparent,
+                            child: child,
+                          );
+                        },
+                        onReorder: (int oldIndex, int newIndex) {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = _persons.removeAt(oldIndex);
+                            _persons.insert(newIndex, item);
+                            DatabaseHelper().updatePersonList(_persons);
+                          });
+                        }
+
+                    ),
+                  )
+              )
+            ],
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddPersonDialog,
         tooltip: S.current.main_newPerson,

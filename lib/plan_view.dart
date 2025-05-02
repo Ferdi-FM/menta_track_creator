@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/create_qr_code.dart';
@@ -35,21 +36,25 @@ class MyHomePageState extends State<PlanView>{
   List<TimePlannerTitle> _calendarHeaders = [];
   final List<TimePlannerTask> _tasks = [];
   int _scrollToSpecificDay = 0;
-  int _scrollToSpecificHour = 0;
+  int _scrollToSpecificHour = 12;
+  int currentPage = 0;
   bool _loaded = false;
   List<List<String>> _overlapGroups = [];
   List<Termin> _weekAppointments = [];
   bool _blockScroll = false;
   double _overallZoom = 1;
+  int cellHeight = 60;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    setUpCalendar1(widget.start, widget.end);
+    _scrollToSpecificHour = DateTime.now().hour;
+    setUpCalendar(widget.start, widget.end);
   }
 
   ///Setup vom Kalendar und den Einträgen
-  void setUpCalendar1(DateTime start, DateTime end) async{
+  void setUpCalendar(DateTime start, DateTime end) async{
     DatabaseHelper databaseHelper = DatabaseHelper();
     _calendarStart = start;
     int timePeriodInDays = end.difference(start).inDays;
@@ -154,7 +159,7 @@ class MyHomePageState extends State<PlanView>{
     setState(() {
       _tasks.clear();
     });
-    setUpCalendar1(widget.start,widget.end);
+    setUpCalendar(widget.start,widget.end);
   }
 
   ///Update wenn keine neuen Tasks hinzukommen
@@ -208,7 +213,7 @@ class MyHomePageState extends State<PlanView>{
       DateTime midNightNewDay = DateTime(endTime.year,endTime.month,endTime.day);
       ///Erster Teil des Termins
       durationList.add(midNightNewDay.difference(startTime).inMinutes);
-      //Es wird gecheckt, ob der Termin außerhalb der Range startet
+      ///Es wird gecheckt, ob der Termin außerhalb der Range startet
       convertedDate["startsOutSideOfWeek"] == 1 ? dayList.add(convertedDate["Days"]!): dayList.add(0);
       convertedDate["startsOutSideOfWeek"] == 1 ? hourList.add(convertedDate["Hours"]!): hourList.add(0);
       convertedDate["startsOutSideOfWeek"] == 1 ? minuteList.add(convertedDate["Minutes"]!): minuteList.add(0);
@@ -247,79 +252,41 @@ class MyHomePageState extends State<PlanView>{
                   behavior: HitTestBehavior.translucent,
                   onTapUp: (event) async {
                     Offset pos = event.globalPosition;
-                    Termin oldTermin = Termin(name: title, startTime: startTime, endTime: endTime);
-                    final result = await Navigator.of(context).push(
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
-                            startDate: widget.start,
-                            endDate: widget.end,
-                            personId: widget.person.id,
-                            terminToUpdate: true,
-                            existingStartTime: startTime,
-                            existingEndTime: endTime,
-                            existingName: title,
-                          ),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            const curve = Curves.easeInOut;
-                            var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
-                            var scaleAnimation = animation.drive(tween);
-                            return ScaleTransition(
-                              scale: scaleAnimation,
-                              alignment: Alignment(pos.dx / MediaQuery.of(context).size.width * 2 - 1,
-                                  pos.dy / MediaQuery.of(context).size.height * 2 - 1), // Die Tap-Position relativ zur Bildschirmgröße
-                              child: child,
-                            );},
-                        )
-                    );
-                    if(result != null){
-                      if(result == true) {
-                      } else {
-                        await DatabaseHelper().updateTermin(widget.person.id, oldTermin, result);
-                      }
-                      updateCalendar();
-                    }
+                    updateTermin(title, startTime, endTime, pos.dx, pos.dy);
                   },
                   child: SizedBox(
                       height: cellHeight.toDouble()*duration/60,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Positioned(
-                            top: -6,
-                            right: -3,
-                            child: SizedBox(),
-                          ),
-                          ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
-                          Positioned(
-                            top: 1,
-                            left: 5,
-                            child: ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9),),) : Text(""), //Ursprünglich 7 : 9
-                          ),
-                          Positioned(
-                            bottom: 1,
-                            left: 5,
-                            child: ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9)),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
-                          ),
-                          Align(
-                            alignment: Alignment.center,
-                            //smargin: EdgeInsets.only(left: 10, right: 10, bottom: duration > 30 ? 12: duration/1, top: duration > 30 ? 10 : duration/1), //Ursprünglich 8 : 12
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: cellHeight*duration/60 < 40 ? fontSize.clamp(0, 4) : 10),
-                              child: Text(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
-                                title,
-                                style: TextStyle(
-                                  fontSize: fontSize,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.normal
+                      child: FittedBox(
+                        fit: BoxFit.fill,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ///Start and Endzeit, beide, damit falls sich einträge Überlappen, sie auseinandergehalten werden können
+                            ((dayList.length == 2 && i == 0)  || dayList.length == 1) ? Text(DateFormat("HH:mm").format(startTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic, fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9),), textAlign: TextAlign.start,) : Text(""), //Ursprünglich 7 : 9
+                            SizedBox(
+                              width: 175,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10, vertical: cellHeight*duration/60 < 40 ? fontSize.clamp(0, 4) : 10),
+                                child: AutoSizeText(
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: (duration/30).toInt() == 0 ? 1 : (duration/30).toInt(),
+                                  title,
+                                  style: TextStyle(
+                                      fontSize: fontSize,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.normal
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                            )
-                          )
-                        ],
-                      ))
+                            ),
+                            ((dayList.length == 2 && i == 1) || dayList.length == 1) ? Text(DateFormat("HH:mm").format(endTime), style: TextStyle(fontWeight: FontWeight.w200, color: Colors.black87, fontStyle: FontStyle.italic,  fontSize: cellHeight*duration/60 < 40 ? fontSize.clamp(2, 6) : fontSize.clamp(4, 9)),): Text(""), //${DateFormat("HH:mm").format(startTime)} -
+
+                          ],
+                        ),
+                      )
+                      )
               ),
             )
         );
@@ -328,7 +295,40 @@ class MyHomePageState extends State<PlanView>{
     }
   }
 
-  int cellHeight = 60;
+  Future<void> updateTermin(String title, DateTime startTime, DateTime endTime, double dx , double dy) async {
+    Termin oldTermin = Termin(name: title, startTime: startTime, endTime: endTime);
+    Termin? result = await Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
+            startDate: widget.start,
+            endDate: widget.end,
+            personId: widget.person.id,
+            terminToUpdate: true,
+            existingStartTime: startTime,
+            existingEndTime: endTime,
+            existingName: title,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const curve = Curves.easeInOut;
+            var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
+            var scaleAnimation = animation.drive(tween);
+            return ScaleTransition(
+              scale: scaleAnimation,
+              alignment: Alignment(dx / MediaQuery.of(context).size.width * 2 - 1,
+                  dy / MediaQuery.of(context).size.height * 2 - 1), // Die Tap-Position relativ zur Bildschirmgröße
+              child: child,
+            );},
+        )
+    );
+    if(result != null){
+      _scrollToSpecificHour = result.startTime.hour;
+      _scrollToSpecificDay = result.startTime.difference(_calendarStart).inDays;
+      await DatabaseHelper().updateTermin(widget.person.id, oldTermin, result);
+      updateCalendar();
+    }
+  }
+
+
   TimePlanner createTimePlaner(int cellHeight, int cellWidth, bool blockScroll){
     return TimePlanner( //index startet bei 0, 0-23 ist also 24/7
       key: UniqueKey(),
@@ -352,6 +352,8 @@ class MyHomePageState extends State<PlanView>{
       tasks: _tasks,
       tapOnEmptyField: (day, hour)async{
         DateTime clickedTime = widget.start.add(Duration(days: day, hours: hour));
+        _scrollToSpecificDay = day;
+        _scrollToSpecificHour = hour;
         final result = await Navigator.of(context).push(
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) => TerminCreatePage(
@@ -383,6 +385,89 @@ class MyHomePageState extends State<PlanView>{
         }
       },
     );
+  }
+
+  Widget buildTaskList(){
+    Map<String,List<Termin>> taskMap = {};
+    DateTime modularTime = widget.start;
+    while(modularTime.isBefore(widget.end.add(Duration(days: 1)))){
+      String weekDay = "${Utilities().getWeekDay(modularTime.weekday, false)} ${DateFormat("dd.MM").format(modularTime)}";
+      taskMap[weekDay] = [];
+      for(Termin t in _weekAppointments){
+        if(t.startTime.day == modularTime.day){ //Solang Zeitperiode nicht länger als 1 Monat ist sollte das funktioniere
+            taskMap[weekDay]?.add(t);
+        }
+      }
+      modularTime = modularTime.add(Duration(days: 1));
+    }
+    return ShaderMask(
+        shaderCallback: (Rect bounds) {
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          Colors.black,
+          Colors.black,
+          Colors.transparent
+        ],
+        stops: [0.0, 0.01, 1.0, 1.0],
+      ).createShader(bounds);
+    },
+    blendMode: BlendMode.dstIn,
+    child:ListView.separated(
+      key: UniqueKey(),
+      itemCount: taskMap.length,
+      itemBuilder: (context, index){
+        String key = taskMap.keys.elementAt(index);
+        return Material(
+          elevation: 10,
+          color: Theme.of(context).listTileTheme.tileColor,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            children: [
+              SizedBox(height: 8,),
+              Text(key,style: TextStyle(fontSize: 18),),
+              if(taskMap[key] != null)...{
+                if(taskMap[key]!.isEmpty) Text(S.current.planView_nothingPlaned, textAlign: TextAlign.center,),
+                for(Termin t in taskMap[key]!)...{
+                  InkWell(
+                      onTapUp: (ev){
+                        updateTermin(t.name, t.startTime,t.endTime,MediaQuery.of(context).size.width/2, ev.globalPosition.dy );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                      child:Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    child:  Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Theme.of(context).listTileTheme.textColor,
+                              ),
+                              width: 10,
+                              height: 10,
+                            ),
+                            SizedBox(width: 10,),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.name, style: TextStyle(decoration: TextDecoration.underline), softWrap: true, maxLines: 1, overflow: TextOverflow.ellipsis,),
+                                Text("${DateFormat("HH:mm").format(t.startTime)} - ${DateFormat("HH:mm").format(t.endTime)}", style: TextStyle(fontStyle: FontStyle.italic),softWrap: true)
+                              ],
+                            )
+                          ]
+                      ),
+                    ),
+                  )
+                }
+              }
+            ],
+          ),
+        );
+      }, separatorBuilder: (BuildContext context, int index) { return SizedBox(height: 20,); },
+      
+    ));
   }
 
   @override
@@ -447,42 +532,85 @@ class MyHomePageState extends State<PlanView>{
           )
         ],
       ),
-      body:LayoutBuilder(builder: (context, constraints){
-      bool isPortrait = constraints.maxWidth < 600;
-      return Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(20),topRight: Radius.circular(20)),
-              color: Theme.of(context).scaffoldBackgroundColor
+      body:
+      PageView(
+        physics: NeverScrollableScrollPhysics(),
+        controller: _pageController,
+        children: [
+          LayoutBuilder(builder: (context, constraints){
+            bool isPortrait = constraints.maxWidth < 600;
+            return Container(
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20),topRight: Radius.circular(20)),
+                  color: Theme.of(context).scaffoldBackgroundColor
+              ),
+              child: Padding(
+                  padding: EdgeInsets.only(left: 0, right: 0),
+                  child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onScaleStart: (ev){
+                        if(ev.pointerCount > 1){
+                          setState(() {
+                            _blockScroll = true;
+                          });
+                        }
+                      },
+                      onScaleEnd: (ev){
+                        setState(() {
+                          _blockScroll = false;
+                        });
+                      },
+                      onScaleUpdate: (details) {
+                        setState(() {
+                          _overallZoom = details.scale;
+                          _overallZoom = _overallZoom.clamp(0.98, 1.03);
+                          cellHeight = (cellHeight * _overallZoom).toInt().clamp(35, 250);
+                          updateTasks();
+                        });
+                      },
+                      child: _loaded ? createTimePlaner(cellHeight, isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt(), _blockScroll) : SizedBox() //index startet bei 0, 0-23 ist also 24/7
+                  )
+              ),
+            );}
           ),
-          child: Padding(
-            padding: EdgeInsets.only(left: 0, right: 0),
-            child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onScaleStart: (ev){
-                  if(ev.pointerCount > 1){
-                      setState(() {
-                        _blockScroll = true;
-                      });
-                  }
-                },
-                onScaleEnd: (ev){
-                  setState(() {
-                    _blockScroll = false;
-                  });
-                },
-                onScaleUpdate: (details) {
-                  setState(() {
-                    _overallZoom = details.scale;
-                    _overallZoom = _overallZoom.clamp(0.98, 1.04);
-                    cellHeight = (cellHeight * _overallZoom).toInt().clamp(35, 250);
-                    updateTasks();
-                  });
-                },
-              child: _loaded ? createTimePlaner(cellHeight, isPortrait ? 125 : ((MediaQuery.of(context).size.width - 60)/7).toInt(), _blockScroll) : SizedBox() //index startet bei 0, 0-23 ist also 24/7
-            )
-          ),
-        );}
-    ),
+          //PAGE 2
+          Padding(
+              padding: EdgeInsets.all(20),
+            child:
+                buildTaskList(),
+          )
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        showUnselectedLabels: true,
+        elevation: 15,
+        backgroundColor: Colors.transparent,
+        currentIndex: currentPage,
+          items: [
+            BottomNavigationBarItem(
+              icon: currentPage == 0 ? Icon(Icons.calendar_view_week) : Icon(Icons.calendar_view_week_outlined),
+              backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+              label:  S.current.planView_viewWeek,
+            ),
+            BottomNavigationBarItem(
+              icon: currentPage == 1 ? Icon(Icons.list) : Icon(Icons.list_outlined),
+              backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+              label:  S.current.planView_viewList,
+            ),
+          ],
+        onTap: (index) {
+            setState(() {
+              currentPage = index;
+            });
+          _pageController.animateToPage(
+            index,
+            duration: Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+          );
+        },
+
+      )
+      ,
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.of(context).push(

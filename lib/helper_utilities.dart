@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'generated/l10n.dart';
+import 'main.dart';
 
 class Utilities {
 
@@ -36,6 +38,22 @@ class Utilities {
                 ),
               ),
               onPressed: () => Utilities().showHelpDialog(context, pageKey),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(width: 10,),
+                Icon(Icons.dark_mode),
+                SizedBox(width: 10),
+                Switch(
+                    value: MyApp.of(context).isDarkMode,
+                    onChanged: (ev) async {
+                      MyApp.of(context).isDarkMode = ev;
+                      MyApp.of(context).changeTheme(ev ? ThemeMode.dark : ThemeMode.light);
+                      SharedPreferences pref = await SharedPreferences.getInstance();
+                      pref.setBool("darkMode", ev);
+                    })
+              ],
             ),
           ],
           builder: (BuildContext context, MenuController controller, Widget? child) {
@@ -95,6 +113,48 @@ class Utilities {
                     Text(S.current.help_PlanView_2, textAlign: TextAlign.center),
                     Text(S.current.help_PlanView_3, textAlign: TextAlign.center),
                     Text(S.current.help_PlanView_4, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          style: TextStyle(fontSize: 10),
+        );
+        break;
+      case "NotePage":
+        mainText = TextSpan(
+          children: [
+            WidgetSpan(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(S.current.help_noteView_1, textAlign: TextAlign.center),
+                    Text(S.current.help_noteView_2, textAlign: TextAlign.center),
+                    Text(S.current.help_noteView_3, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          style: TextStyle(fontSize: 10),
+        );
+        break;
+      case "mainPage":
+        mainText = TextSpan(
+          children: [
+            WidgetSpan(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(S.current.help_mainPage_1, textAlign: TextAlign.center),
+                    Text(S.current.help_mainPage_2, textAlign: TextAlign.center),
+                    Text(S.current.help_mainPage_3, textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -246,5 +306,33 @@ class Utilities {
         ),
       );
     }
+  }
+
+  Future<bool> showDeleteConfirmation(BuildContext context, String entryTitle) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: FittedBox(child: Text(S.current.confirm_delete)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(S.current.delete_entry, textAlign: TextAlign.center,),
+              Text(entryTitle, style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(S.current.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(S.current.delete, style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
   }
 }

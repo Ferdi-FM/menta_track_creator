@@ -130,22 +130,22 @@ class TimePlannerState extends State<TimePlanner> {
           double scrollHorizontalOffset = (day) * config.cellWidth!.toDouble();
           mainVerticalController.animateTo(
             scrollOffset,
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCirc,
           );
           timeVerticalController.animateTo(
             scrollOffset,
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCirc,
           );
           mainHorizontalController.animateTo(
             scrollHorizontalOffset,
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCirc,
           );
           dayHorizontalController.animateTo(
             scrollHorizontalOffset,
-            duration: const Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 400),
             curve: Curves.easeOutCirc,
           );
         }

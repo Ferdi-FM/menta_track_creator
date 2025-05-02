@@ -56,12 +56,18 @@ class CommentPageState extends State<CommentPage> {
             child: Column(
               children: <Widget>[
                 TextField(
+                  onTapOutside: (ev){
+                    FocusScope.of(context).unfocus();
+                  },
                   controller: titleController,
                   decoration:
                       InputDecoration(labelText: S.current.comments_title),
                 ),
                 SizedBox(height: 10),
                 TextField(
+                  onTapOutside: (ev){
+                    FocusScope.of(context).unfocus();
+                  },
                   controller: commentController,
                   maxLines: 3,
                   scrollPadding: EdgeInsets.only(
@@ -123,7 +129,16 @@ class CommentPageState extends State<CommentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: Container(
+        decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors:[Theme.of(context).scaffoldBackgroundColor, Theme.of(context).primaryColorLight],
+          stops: [0.5,1.0],
+        begin: Alignment.topRight,
+        end: Alignment.bottomRight,
+        ),
+    ),
+    child:Padding(
           padding: EdgeInsets.only(left: 16, right: 16, bottom: 15),
           child: Column(
             children: [
@@ -260,7 +275,7 @@ class CommentPageState extends State<CommentPage> {
               ),
               SizedBox(height: 15)
             ],
-          )),
+          ))),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             _showAddCommentDialog();
@@ -309,6 +324,7 @@ class InfoListTileState extends State<InfoListTile> {
       );
       tp.layout(maxWidth: size.maxWidth);
       var exceeded = tp.didExceedMaxLines;
+      textIsOverflowing = tp.didExceedMaxLines;
 
       return Scrollbar(
           controller: _scrollController,
@@ -381,7 +397,7 @@ class InfoListTileState extends State<InfoListTile> {
       child: InkWell(
         onTap: (){
           setState(() {
-            showInfo = !showInfo;
+            if(textIsOverflowing) showInfo = !showInfo;
           });
         },
         child: Column(

@@ -84,7 +84,7 @@ class TerminCreateState extends State<TerminCreatePage> {
     Future<DateTime?> pickDate(DateTime? initialDate) async {
       return await showDatePicker(
         context: context,
-        initialDate: widget.startDate,
+        initialDate: widget.existingStartTime,
         firstDate: widget.startDate,
         lastDate: widget.endDate,
         barrierDismissible: false,
@@ -148,6 +148,9 @@ class TerminCreateState extends State<TerminCreatePage> {
                    setState(() {
                      error = false;
                    });
+                 },
+                 onTapOutside: (ev){
+                    FocusScope.of(context).unfocus();
                  },
                ),
                SizedBox(height: 10),
@@ -289,7 +292,7 @@ class TerminCreateState extends State<TerminCreatePage> {
                      )
                  ) : Flexible(child: Container(color: Colors.transparent,))
                },
-               SizedBox(height: 20,),
+               if(widget.terminToUpdate) Spacer(),
                Align(
                    alignment: Alignment.bottomCenter,
                    child: Column(

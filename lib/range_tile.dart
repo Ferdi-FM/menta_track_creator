@@ -35,7 +35,89 @@ class RangeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+            onTapUp: (ev) => {
+              onItemTap(ev),
+            },
+            onLongPress: (){
+              longPressItem();
+            },
+            child: Container(
+                constraints: BoxConstraints(
+                    minHeight: 72
+                ),
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      Theme.of(context).primaryColor,
+                      isSelected ? Theme.of(context).primaryColorLight.withAlpha(210) : Theme.of(context).listTileTheme.tileColor ?? Colors.blueGrey,
+                      isSelected ? Theme.of(context).primaryColorLight.withAlpha(210) : Theme.of(context).listTileTheme.tileColor ?? Colors.blueGrey,
+                      Theme.of(context).primaryColor
+                    ],
+                        stops: [0.0,0.07,0.93,1.0])
+                ),
+                child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(width: 12,),
+                      Icon(isSelected ? Icons.check_circle : Icons.view_week, color: Theme.of(context).primaryColor),
+                      SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
+                                AutoSizeText(
+                                  "${Utilities().getWeekDay(start.weekday, true)} ${DateFormat("dd.MM.yy").format(start)}",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  maxFontSize: 13,
+                                )
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
+                                AutoSizeText(
+                                  "${Utilities().getWeekDay(end.weekday, true)} ${DateFormat("dd.MM.yy").format(end)}",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  maxFontSize: 13,
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: GestureDetector(
+                          onTap: copyPressed,
+                          child: Container(
+                            padding: EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.transparent
+                            ),
+                            child: Icon(Icons.copy, size: 32, color: Theme.of(context).primaryColor),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+    );
+  }
+}
+
+/*
+OLD TILE:
+return Container(
         decoration: BoxDecoration( //rechte seite
           border: Border(right: BorderSide(color: Theme.of(context).primaryColor, width: 10)),
           //borderRadius: BorderRadius.horizontal(right: Radius.circular(10)),
@@ -94,14 +176,6 @@ class RangeTile extends StatelessWidget {
 
                               ),
                         ),
-                        //FittedBox(
-                        //  child: InkWell(
-                        //      onLongPress: (){
-                        //        deleteItemTap();
-                        //      },
-                        //      child: Padding(padding: EdgeInsets.all(3),
-                        //        child: Icon(Icons.delete_outline, size: 32,),)),
-                        //)
                       ],
                     ),)
                 ),
@@ -109,49 +183,4 @@ class RangeTile extends StatelessWidget {
             ),
           ),
     );
-  }
-}
-
-
-/* Alternativer Title
-Table(
-                columnWidths: {
-                  0: IntrinsicColumnWidth(),
-                  1: IntrinsicColumnWidth(),
-                  2: FlexColumnWidth()
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  TableRow(children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2),
-                      child:  Text("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Text("${Utilities().getWeekDay(start.weekday,true)}", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2),
-                      child: Text("${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold))
-                    )
-
-                  ]),
-                  TableRow(children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2),
-                      child:  Text("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Text("${Utilities().getWeekDay(end.weekday,true)}", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 2),
-                        child: Text("${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold))
-                    )
-                  ]),
-                ],
-              ),
-
  */

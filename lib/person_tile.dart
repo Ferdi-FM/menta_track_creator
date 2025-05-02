@@ -1,0 +1,155 @@
+import 'dart:io';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/material.dart';
+import 'package:menta_track_creator/helper_utilities.dart';
+import 'package:menta_track_creator/person.dart';
+import 'package:menta_track_creator/person_page.dart';
+
+import 'main.dart';
+
+class PersonTile extends StatelessWidget {
+   final Person person;
+   final int index;
+   final VoidCallback deleteEntry;
+   final VoidCallback editEntry;
+
+  const PersonTile({
+    super.key,
+    required this.person, required this.index, required this.deleteEntry, required this.editEntry,
+
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: Key(person.id.toString()),
+      padding: EdgeInsets.only(top: index == 0 ? 20 : 0),
+      child:  GestureDetector(
+          onTapUp: (ev){
+            var pos = ev.globalPosition;
+            navigatorKey.currentState?.push(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      PersonDetailPage(person: person),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    const curve = Curves.easeInOut;
+
+                    var tween = Tween<double>(begin: 0.1, end: 1.0).chain(CurveTween(curve: curve));
+                    var scaleAnimation = animation.drive(tween);
+
+                    return ScaleTransition(
+                      scale: scaleAnimation,
+                      alignment: Alignment(0, pos.dy / MediaQuery.of(context).size.height * 2 - 1),
+                      child: child,
+                    );
+                  },
+                )
+            );
+          },
+          child:Card(
+              color: Colors.red,
+              elevation: 10,
+              margin: EdgeInsets.symmetric(vertical: 4,horizontal: 3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child:
+              Dismissible(
+                  direction: DismissDirection.startToEnd,
+                  onDismissed: (ev){
+                    deleteEntry();
+                  },
+                  confirmDismiss: (ev) async {
+                    return await Utilities().showDeleteConfirmation(context,person.name);
+                  },
+                  background: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.red,
+                    ),
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                  key: Key(person.id.toString()),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        //color: Theme.of(context).listTileTheme.tileColor
+                        gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Theme.of(context).primaryColorLight,
+                              Theme.of(context).listTileTheme.tileColor ?? Colors.blueGrey,
+                            ]
+                        )
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.15,
+                            minHeight: MediaQuery.of(context).size.height * 0.15,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width*0.3
+                              ),
+                              child: person.imagePath!.isNotEmpty
+                                  ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: ShaderMask(
+                                  shaderCallback: (Rect bounds) {
+                                    return RadialGradient(
+                                      center: Alignment.center,
+                                      radius: 0.8,
+                                      colors: [
+                                        Colors.black87,
+                                        Colors.transparent,
+                                      ],
+                                      stops: [0.5, 1.0],
+                                    ).createShader(bounds);
+                                  },
+                                  blendMode: BlendMode.dstIn,
+                                  child: Image.file(File(person.imagePath!)),
+                                ),
+                              ) : Icon(
+                                Icons.person,
+                                size: 50,
+                              ),
+                            ),
+                          ),
+                        ),
+                        AutoSizeText(person.name, textAlign: TextAlign.start, minFontSize: 16,),
+                        Spacer(),
+                        Padding(
+                            padding: EdgeInsets.all(15),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    editEntry();
+                                  },
+                                  icon: Icon(Icons.edit, size: 30,),
+                                )
+                              ],
+                            )
+                        ),
+                      ],
+                    ),
+                  )
+              )
+          )
+      ),
+    );
+  }
+}

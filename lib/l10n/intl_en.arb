@@ -19,6 +19,12 @@
   "main_noPerson": "No Person saved yet",
   "main_newPerson": "New Person",
 
+  "main_addImage": "Add Image",
+  "main_imageInfo": "If you want you can add an Image",
+  "planView_nothingPlaned": "No Activities planed!",
+  "planView_viewWeek": "Week-View",
+  "planView_viewList": "List-View",
+
   "qr_code": "QR Code",
   "generate_qrCode": "generate QR-Code",
 
@@ -65,6 +71,10 @@
   "tooltip_variation": "Variation",
   "tooltip_variation_text": "Add the selected Duration to a Task",
 
+  "help_mainPage_1": "With the button on the bottom right, you can add a new person.\nYou can set first/last names (or nicknames/abbreviations), as well as optionally take a picture.\n",
+  "help_mainPage_2": "By pressing an entry, you can open the person's page. Here, you can create weekly plans and write notes.\n",
+  "help_mainPage_3": "By pressing the pencil, you can edit a person (change name or picture).\nBy swiping an entry to the right, you can delete it, but a confirmation will appear first asking if you're sure!\n",
+
   "help_PersonPage_1": "By holding down on a weekly schedule, you can select it",
   "help_PersonPage_2": "A bar will then appear at the bottom of the screen\nIf you press the X, the selection will be cleared\nIf you press the QR code, a code for all selected weeks will be generated at once",
   "help_PersonPage_3": "\nBy pressing the copy icon, you can copy the schedule to a new week",
@@ -73,5 +83,9 @@
   "help_PlanView_1": "By long-pressing on a field, you can create a task there",
   "help_PlanView_2": "By pressing the button in the bottom right corner, you can create a general task",
   "help_PlanView_3": "By pressing on a task, you can edit it\n\nYou can zoom the view, it's recommended that you do so by having one finger on the left time-bar",
-  "help_PlanView_4": "\nIn the drop-down menu at the top right, you can find an option to generate a QR code for this period"
+  "help_PlanView_4": "\nIn the drop-down menu at the top right, you can find an option to generate a QR code for this period",
+
+  "help_noteView_1": "You can arrange a note using the handle at the top left by dragging and dropping it",
+  "help_noteView_2": "\nIf you swipe a note to the left, you can delete it. You then have 3 seconds to undo it",
+  "help_noteView_3": "\nIf a note is very long, you can expand it by tapping and then scroll through it"
 }
