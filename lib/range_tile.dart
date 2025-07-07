@@ -9,6 +9,7 @@ class RangeTile extends StatelessWidget {
   final int index;
   final DateTime start;
   final DateTime end;
+  final bool newest;
   final String user;
   final bool isSelected;
   final Function onItemTap;
@@ -24,7 +25,7 @@ class RangeTile extends StatelessWidget {
     required this.index,
     required this.longPressItem,
     required this.copyPressed,
-    required this.onItemTap,
+    required this.onItemTap, required this.newest,
   });
 
   String getDateAndTimeFromDay(String dayString){
@@ -70,9 +71,9 @@ class RangeTile extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
+                                AutoSizeText("${newest ? S.current.to : S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
                                 AutoSizeText(
-                                  "${Utilities().getWeekDay(start.weekday, true)} ${DateFormat("dd.MM.yy").format(start)}",
+                                  "${Utilities().getWeekDay(newest ? end.weekday : start.weekday, true)} ${DateFormat("dd.MM.yy").format(newest ? end : start)}",
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                   maxFontSize: 13,
                                 )
@@ -82,9 +83,9 @@ class RangeTile extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
+                                AutoSizeText("${newest ? S.current.from : S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13),
                                 AutoSizeText(
-                                  "${Utilities().getWeekDay(end.weekday, true)} ${DateFormat("dd.MM.yy").format(end)}",
+                                  "${Utilities().getWeekDay(newest ? start.weekday : end.weekday, true)} ${DateFormat("dd.MM.yy").format(newest ? start : end)}",
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                   maxFontSize: 13,
                                 )
@@ -114,73 +115,3 @@ class RangeTile extends StatelessWidget {
     );
   }
 }
-
-/*
-OLD TILE:
-return Container(
-        decoration: BoxDecoration( //rechte seite
-          border: Border(right: BorderSide(color: Theme.of(context).primaryColor, width: 10)),
-          //borderRadius: BorderRadius.horizontal(right: Radius.circular(10)),
-        ),
-        child: Container(
-          decoration: BoxDecoration( //linke Seite
-            border: Border(left: BorderSide(color: Theme.of(context).primaryColor,width: 10)),                    //Borderside darf immmer nur einfarbig sein
-            //borderRadius: BorderRadius.horizontal(left: Radius.circular(6)),
-          ),
-          child: GestureDetector(
-            onTapUp: (ev) => {
-              onItemTap(ev),
-            },
-            onLongPress: (){
-              longPressItem();
-            },
-            child: ListTile(
-              selected: isSelected,
-              selectedTileColor: Theme.of(context).primaryColorLight,
-              minTileHeight: 72,
-              contentPadding: EdgeInsets.symmetric(horizontal: 10),
-              leading: Icon(Icons.view_week),//Icon(Icons.calendar_view_week),
-              title: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                           AutoSizeText("${S.current.from}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,),
-                           AutoSizeText("${Utilities().getWeekDay(start.weekday,true)} ${DateFormat("dd.MM.yy").format(start)}", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,)
-                        ],
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          AutoSizeText("${S.current.to}:", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,),
-                          AutoSizeText("${Utilities().getWeekDay(end.weekday,true)} ${DateFormat("dd.MM.yy").format(end)}", style: TextStyle(fontWeight: FontWeight.bold), maxFontSize: 13,)
-                        ],
-                      )
-                    ],
-              ),
-              trailing: Padding(padding: EdgeInsets.only(top: 12, bottom: 12, left: 8, right: 10),
-                  child: FittedBox(
-                    child:   Row(
-                      spacing: 13,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.fitHeight,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                              onTap: () {copyPressed();},
-                              child: Padding(padding: EdgeInsets.all(3),
-                                child: Icon(Icons.copy, size: 32,),)
-
-                              ),
-                        ),
-                      ],
-                    ),)
-                ),
-              )
-            ),
-          ),
-    );
- */

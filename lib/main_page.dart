@@ -73,6 +73,7 @@ class MyHomePageState extends State<MyHomePage> {
     if(person != null){
       firstNameController.text = person.name.split(" ").first;
       lastNameController.text = person.name.split(" ").last;
+      imagePath = person.imagePath!;
     }
 
     return showDialog<bool>(
@@ -99,8 +100,17 @@ class MyHomePageState extends State<MyHomePage> {
                     SizedBox(height: 20,),
                     Row(
                       children: [
-                        Text(S.current.main_addImage),
+                        Text(imagePath.isEmpty ? S.current.main_addImage : S.current.main_changeImage),
                         Spacer(),
+                        if(imagePath.isNotEmpty) IconButton(
+                            onPressed: (){
+                              setState((){
+                                image = null;
+                                imagePath = "";
+                              });
+
+                            },
+                            icon: Icon(Icons.delete)),
                         IconButton(
                           onPressed: () async {
                             Map<String, dynamic> photo = await  PhotoHelper().takePhotoAndSave();
@@ -111,18 +121,19 @@ class MyHomePageState extends State<MyHomePage> {
                               });
                             }
                           },
-                          icon: Icon(Icons.camera),
+                          icon: Icon(Icons.add_a_photo),
                         )
                       ],
                     ),
+                    SizedBox(height: 10,),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxHeight: MediaQuery.of(context).size.height*0.3
                         ),
-                        child: person != null && person.imagePath!.isNotEmpty && image == null
-                            ? Image.file(File(person.imagePath!))
+                        child: person != null && imagePath.isNotEmpty && image == null
+                            ? Image.file(File(imagePath))
                             :  Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
@@ -194,7 +205,9 @@ class MyHomePageState extends State<MyHomePage> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: S.current.main_search,
-                  border: OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)
+                  ),
                 ),
                 onChanged: (ev){
                   searchPersons(ev);
@@ -251,7 +264,7 @@ class MyHomePageState extends State<MyHomePage> {
                                 await Future.delayed(Duration(seconds: 3), (){
                                   if(!_persons.contains(person)){
                                     DatabaseHelper().deletePerson(person.id);
-                                    DatabaseHelper().updatePersonList(_persons);
+                                    if(context.mounted) DatabaseHelper().updatePersonList(_persons, context);
                                   }
                                 });
                               },
@@ -275,7 +288,7 @@ class MyHomePageState extends State<MyHomePage> {
                             if (newIndex > oldIndex) newIndex -= 1;
                             final item = _persons.removeAt(oldIndex);
                             _persons.insert(newIndex, item);
-                            DatabaseHelper().updatePersonList(_persons);
+                            DatabaseHelper().updatePersonList(_persons, context);
                           });
                         }
 

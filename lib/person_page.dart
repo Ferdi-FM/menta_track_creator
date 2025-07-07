@@ -301,7 +301,8 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                                               _selectedRanges.add(range);
                                             }
                                           });
-                                        }
+                                        },
+                                    newest: _isSelected[0],
                                   ),
                                 ),
                                 )

@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:menta_track_creator/full_screen_image_viewer.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
 import 'package:menta_track_creator/person.dart';
 import 'package:menta_track_creator/person_page.dart';
-
 import 'main.dart';
 
 class PersonTile extends StatelessWidget {
@@ -12,6 +12,7 @@ class PersonTile extends StatelessWidget {
    final int index;
    final VoidCallback deleteEntry;
    final VoidCallback editEntry;
+
 
   const PersonTile({
     super.key,
@@ -65,7 +66,7 @@ class PersonTile extends StatelessWidget {
                   background: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      color: Colors.red,
+                      color: Colors.red
                     ),
                     alignment: Alignment.centerLeft,
                     padding: EdgeInsets.symmetric(horizontal: 10),
@@ -88,68 +89,71 @@ class PersonTile extends StatelessWidget {
                             ]
                         )
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.15,
-                            minHeight: MediaQuery.of(context).size.height * 0.15,
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context).size.width*0.3
-                              ),
+                    child:  Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.25,
+                            height: MediaQuery.of(context).size.height * 0.15,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                               child: person.imagePath!.isNotEmpty
-                                  ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: ShaderMask(
-                                  shaderCallback: (Rect bounds) {
-                                    return RadialGradient(
-                                      center: Alignment.center,
-                                      radius: 0.8,
-                                      colors: [
-                                        Colors.black87,
-                                        Colors.transparent,
-                                      ],
-                                      stops: [0.5, 1.0],
-                                    ).createShader(bounds);
-                                  },
-                                  blendMode: BlendMode.dstIn,
-                                  child: Image.file(File(person.imagePath!)),
-                                ),
-                              ) : Icon(
+                                  ? GestureDetector(
+                                      onTapDown: (ev){
+                                        FullScreenImageViewer(path: person.imagePath!,).showFullScreenImage(ev.globalPosition);
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.fromBorderSide(
+                                                BorderSide(
+                                                    width: 0.75
+                                                )
+                                            )
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            File(person.imagePath!),
+                                            fit: BoxFit.fitHeight,
+                                          ),
+                                        ),
+                                      ) ,
+                                    )
+                                  : Icon(
                                 Icons.person,
                                 size: 50,
                               ),
                             ),
                           ),
-                        ),
-                        AutoSizeText(person.name, textAlign: TextAlign.start, minFontSize: 16,),
-                        Spacer(),
-                        Padding(
-                            padding: EdgeInsets.all(15),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    editEntry();
-                                  },
-                                  icon: Icon(Icons.edit, size: 30,),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            child: AutoSizeText(person.name, textAlign: TextAlign.start, minFontSize: 16,),
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.25,
+                            child: Padding(
+                                padding: EdgeInsets.all(15),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        editEntry();
+                                      },
+                                      icon: Icon(Icons.edit, size: 30,),
+                                    )
+                                  ],
                                 )
-                              ],
-                            )
-                        ),
-                      ],
-                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ) ,
                   )
               )
           )
-      ),
     );
   }
 }

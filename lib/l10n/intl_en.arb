@@ -16,10 +16,12 @@
   "main_surname": "sur-name",
   "main_persons": "Persons",
   "main_search": "search Person",
+  "main_reorder_while_search": "During an active search changes in the Order won't be saved!",
   "main_noPerson": "No Person saved yet",
   "main_newPerson": "New Person",
 
   "main_addImage": "Add Image",
+  "main_changeImage": "Change Image",
   "main_imageInfo": "If you want you can add an Image",
   "planView_nothingPlaned": "No Activities planed!",
   "planView_viewWeek": "Week-View",

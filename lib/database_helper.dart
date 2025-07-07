@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:menta_track_creator/person.dart';
 import 'package:menta_track_creator/termin.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+
+import 'generated/l10n.dart';
 
 
 class DatabaseHelper {
@@ -77,8 +80,8 @@ class DatabaseHelper {
 
   Future<void> updateCommentList(int personId, List<Map<String,dynamic>> updatedList) async {
     final db = await database;
-    final batch = db.batch();
-
+    final batch = db.batch();    
+    
     for (int i = 0; i < updatedList.length; i++){
       Map<String, dynamic> map = updatedList[i];
       String title = map["commentTitle"];
@@ -230,10 +233,19 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> updatePersonList(List<Person> updatedPersonList) async {
+  Future<void> updatePersonList(List<Person> updatedPersonList, BuildContext context) async {
     final db = await database;
     final batch = db.batch();
-
+    List<Person> fullList = await getPersons("");
+    if(fullList.length != updatedPersonList.length){
+      if(context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.current.main_reorder_while_search))
+        );
+        return;
+      }
+    }
+    
     for (int i = 0; i < updatedPersonList.length; i++){
       Person p = updatedPersonList[i];
       batch.update(

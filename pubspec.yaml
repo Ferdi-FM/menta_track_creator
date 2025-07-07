@@ -60,6 +60,12 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  adaptive_icon_foreground: "assets/icon/mentaTrack_Creator_Icon_foreground.png"
+  adaptive_icon_background: "assets/icon/mentaTrack_Creator_Icon_Background.png"
+  image_path: "assets/icon/mentaTrack_Creator_Icon_IOS.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
