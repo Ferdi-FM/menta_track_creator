@@ -1,4 +1,4 @@
-# menta_track_creator
+# MentATrack-Creator
 
 ![Version](https://img.shields.io/badge/version-1.5.1-blue)
 ![Platform](https://img.shields.io/badge/platform-Flutter-blue)
