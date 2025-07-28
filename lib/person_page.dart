@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import 'package:menta_track_creator/comment_page.dart';
 import 'package:menta_track_creator/database_helper.dart';
@@ -306,7 +307,7 @@ class PersonDetailPageState extends State<PersonDetailPage> {
                                   ),
                                 ),
                                 )
-                            ),
+                            ).animate().slideX(delay: Duration(milliseconds: index*100), begin: -1, end: 0),
                           );
                         }
                       ),

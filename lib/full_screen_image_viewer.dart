@@ -39,8 +39,21 @@ class FullScreenImageViewer extends StatelessWidget {
             child: InteractiveViewer(
               panEnabled: true,
               minScale: 0.5,
-              maxScale: 6.0,
-              child: Image.file(File(path)),
+              maxScale: 3.0,
+              child: Container(
+                constraints: BoxConstraints.expand(),
+                child: Image.file(
+                  File(path),
+                  fit: BoxFit.contain,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded || frame != null) {
+                      return child;
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                )
+              )
             ),
           ),
           Positioned(

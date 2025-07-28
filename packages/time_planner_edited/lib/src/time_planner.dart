@@ -70,6 +70,8 @@ class TimePlannerState extends State<TimePlanner> {
   bool? isAnimated = true;
   int? isDefinedAnimated;
   int? isDefinedAnimatedDay;
+  bool blockScroll = false;
+  final Set<int> _activePointers = {};
 
   /// check input value rules
   void _checkInputValue() {
@@ -111,6 +113,7 @@ class TimePlannerState extends State<TimePlanner> {
     config.use24HourFormat = widget.use24HourFormat;
     config.setTimeOnAxis = widget.setTimeOnAxis;
     config.borderRadius = style.borderRadius;
+    blockScroll = widget.blockScroll;
     isAnimated = widget.currentTimeAnimation;
     isDefinedAnimated = widget.animateToDefinedHour;
     isDefinedAnimatedDay = widget.animateToDefinedDay;
@@ -130,26 +133,29 @@ class TimePlannerState extends State<TimePlanner> {
           double scrollHorizontalOffset = (day) * config.cellWidth!.toDouble();
           mainVerticalController.animateTo(
             scrollOffset,
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCirc,
           );
           timeVerticalController.animateTo(
             scrollOffset,
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCirc,
           );
           mainHorizontalController.animateTo(
             scrollHorizontalOffset,
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCirc,
           );
           dayHorizontalController.animateTo(
             scrollHorizontalOffset,
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCirc,
           );
         }
-      }
+      } //else {
+        //double scrollOffset = isDefinedAnimated! * config.cellHeight!.toDouble();
+        //mainVerticalController.jumpTo(scrollOffset);
+        //}
     });
   }
 
@@ -251,24 +257,38 @@ class TimePlannerState extends State<TimePlanner> {
       );
   }
 
+  void handlePointers(var event){
+    _activePointers.contains(event.pointer) ? _activePointers.remove(event.pointer) : _activePointers.add(event.pointer);
+    if(mounted){
+      setState(() {
+        _activePointers.length < 2
+            ? blockScroll = false
+            : {blockScroll = true, isAnimated = false};
+      });
+    }
+  }
+
   Widget buildMainBody() {
     int day = 0;
     int hour = 0;
-    if (style.showScrollBar!) {
       return Stack(
         children: [
           Scrollbar(
-              controller: mainVerticalController,
-              thumbVisibility: true,
+            controller: mainVerticalController,
+            thumbVisibility: style.showScrollBar,
+            child: Listener(
+              onPointerDown: handlePointers,
+              onPointerUp: handlePointers,
+              onPointerCancel:handlePointers,
               child: SingleChildScrollView(
-                physics: widget.blockScroll ? NeverScrollableScrollPhysics() : null,
+                physics: blockScroll ? NeverScrollableScrollPhysics() : null,
                 controller: mainVerticalController,
                 child: Scrollbar(
                   controller: mainHorizontalController,
-                  thumbVisibility: true,
+                  thumbVisibility: style.showScrollBar,
                   child: SingleChildScrollView(
                     controller: mainHorizontalController,
-                    physics: widget.blockScroll ? NeverScrollableScrollPhysics() : null,
+                    physics: blockScroll ? NeverScrollableScrollPhysics() : null,
                     scrollDirection: Axis.horizontal,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -334,7 +354,7 @@ class TimePlannerState extends State<TimePlanner> {
                                         ),
                                     ],
                                   ),
-                                  Positioned( ///ZEITANZEIGE
+                                  Positioned( ///Zeitanzeige
                                     top: DateTime.now().hour * config.cellHeight! + (config.cellHeight! * DateTime.now().minute / 60), // Position der Linie in der Mitte des Containers (200 / 2 = 100)
                                     left: 0,
                                     right: 0,
@@ -357,79 +377,9 @@ class TimePlannerState extends State<TimePlanner> {
                 ),
               ),
             ),
+          ),
         ],
       );
-    }
-    return SingleChildScrollView(
-      controller: mainVerticalController,
-      child: SingleChildScrollView(
-        controller: mainHorizontalController,
-        scrollDirection: Axis.horizontal,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                SizedBox(
-                  height: (config.totalHours * config.cellHeight!) + config.cellHeight! + 10,
-                  width: (config.totalDays * config.cellWidth!).toDouble(),
-                  child: Stack(
-                    children: <Widget>[
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          for (var i = 0; i < config.totalHours; i++)
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                SizedBox(
-                                  height: (config.cellHeight! - 1).toDouble(),
-                                ),
-                                const Divider(
-                                  height: 1,
-                                ),
-                              ],
-                            )
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          for (var i = 0; i < config.totalDays; i++)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                SizedBox(
-                                  width: (config.cellWidth! - 1).toDouble(),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height:
-                                  (config.totalHours * config.cellHeight!) +
-                                      config.cellHeight!,
-                                  color: Colors.black12,
-                                )
-                              ],
-                            )
-                        ],
-                      ),
-                      for (int i = 0; i < tasks.length; i++) ...{
-                          tasks[i]
-                      },
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   String formattedTime(int hour) {

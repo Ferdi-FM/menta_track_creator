@@ -54,7 +54,7 @@ class RangeTile extends StatelessWidget {
                       isSelected ? Theme.of(context).primaryColorLight.withAlpha(210) : Theme.of(context).listTileTheme.tileColor ?? Colors.blueGrey,
                       Theme.of(context).primaryColor
                     ],
-                        stops: [0.0,0.07,0.93,1.0])
+                        stops: [0.0,0.04,0.96,1.0])
                 ),
                 child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),

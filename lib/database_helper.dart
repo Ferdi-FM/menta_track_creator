@@ -185,7 +185,6 @@ class DatabaseHelper {
   Future<void> insertTermin(Termin termin, int personId) async {
     final db = await database;
 
-    //Erstellt die Tabelle mit dem ersten Tag der Woche in der Tabelle WeeklyPlans.
     await db.insert(
       "createdTermine",
       {
@@ -206,7 +205,6 @@ class DatabaseHelper {
   Future<int> insertPerson(String name, String imagePath, int sortIndex) async {
     final db = await database;
 
-    //Erstellt die Tabelle mit dem ersten Tag der Woche in der Tabelle WeeklyPlans.
     return await db.insert(
       "Persons",
       {

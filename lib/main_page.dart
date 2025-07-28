@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/person.dart';
@@ -239,7 +240,7 @@ class MyHomePageState extends State<MyHomePage> {
                         itemBuilder: (context, index) {
                           final person = _persons[index];
                           return PersonTile(
-                            key: Key(person.id.toString()),
+                              key: Key(person.id.toString()),
                               person: person,
                               index: index,
                               deleteEntry: () async {
@@ -261,9 +262,9 @@ class MyHomePageState extends State<MyHomePage> {
                                     duration: Duration(seconds: 3),
                                   ),
                                 );
-                                await Future.delayed(Duration(seconds: 3), (){
+                                await Future.delayed(Duration(seconds: 3), () async {
                                   if(!_persons.contains(person)){
-                                    DatabaseHelper().deletePerson(person.id);
+                                    await DatabaseHelper().deletePerson(person.id);
                                     if(context.mounted) DatabaseHelper().updatePersonList(_persons, context);
                                   }
                                 });
@@ -294,7 +295,7 @@ class MyHomePageState extends State<MyHomePage> {
 
                     ),
                   )
-              )
+              ).animate().fadeIn(delay: (300).ms, duration: 700.ms, curve: Curves.easeInOut, begin: 0),
             ],
           ),
         ),

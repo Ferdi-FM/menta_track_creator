@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:menta_track_creator/full_screen_image_viewer.dart';
 import 'package:menta_track_creator/helper_utilities.dart';
 import 'package:menta_track_creator/person.dart';
@@ -13,12 +15,29 @@ class PersonTile extends StatelessWidget {
    final VoidCallback deleteEntry;
    final VoidCallback editEntry;
 
-
   const PersonTile({
     super.key,
-    required this.person, required this.index, required this.deleteEntry, required this.editEntry,
-
+    required this.person,
+    required this.index,
+    required this.deleteEntry,
+    required this.editEntry,
   });
+
+   Future<Uint8List?> compressImage(String filePath, BuildContext context, int? width) async {
+     final file = File(filePath);
+     if (!await file.exists() || !context.mounted) return null;
+
+     int targetWidth = width ?? (MediaQuery.of(context).size.width * MediaQuery.of(context).devicePixelRatio).round(); //Wenn keine width angegebn wird, ist das Bild maximal so groß wie die Bildschirmauflösung
+
+     final result = await FlutterImageCompress.compressWithFile(
+       file.absolute.path,
+       minWidth: targetWidth,
+       quality: 75,
+       format: CompressFormat.jpeg,
+     );
+
+     return result;
+   }
 
   @override
   Widget build(BuildContext context) {
@@ -113,17 +132,25 @@ class PersonTile extends StatelessWidget {
                                         ),
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
-                                          child: Image.file(
-                                            File(person.imagePath!),
-                                            fit: BoxFit.fitHeight,
+                                          child:  FutureBuilder<Uint8List?>(
+                                            future: compressImage(person.imagePath!, context, 70),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                                return Center(child: CircularProgressIndicator(),);
+                                              } else if (snapshot.hasData && snapshot.data != null) {
+                                                return Image.memory(
+                                                  snapshot.data!,
+                                                  fit: BoxFit.fitHeight,
+                                                );
+                                              } else {
+                                                return Icon(Icons.person, size: 50,);
+                                              }
+                                            },
                                           ),
                                         ),
                                       ) ,
                                     )
-                                  : Icon(
-                                Icons.person,
-                                size: 50,
-                              ),
+                                  : Icon(Icons.person, size: 50,),
                             ),
                           ),
                           SizedBox(

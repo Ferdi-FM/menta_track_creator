@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:menta_track_creator/database_helper.dart';
 import 'package:menta_track_creator/person.dart';
 import 'generated/l10n.dart';
@@ -251,7 +252,7 @@ class CommentPageState extends State<CommentPage> {
                               },
                             ),
                           ),
-                        ),
+                        ).animate().slideX(delay: Duration(milliseconds: index*200), begin: 1, end: 0),
                       );
                     },
                     proxyDecorator: (child, index, animation) {
